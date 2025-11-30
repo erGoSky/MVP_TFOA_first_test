@@ -62,9 +62,15 @@ export interface InventoryItem {
   contents?: InventoryItem[]; // For containers
 }
 
+
+// Import centralized entity types
+import type { BiomeType, ResourceType } from './constants/entities';
+export type { BiomeType, ResourceType };
+
+
 export interface Resource extends Entity {
   type: 'resource';
-  resourceType: string; 
+  resourceType: ResourceType; 
   amount: number;
   harvested: boolean;
   properties: {
@@ -173,9 +179,20 @@ export interface Building extends Entity {
   workProgress?: WorkProgress;          // Current construction work
 }
 
+export interface Tile {
+  x: number;
+  y: number;
+  biome: BiomeType;
+  elevation: number;
+  moisture: number;
+}
+
 export interface WorldState {
   tick: number;
   time: number; // Global simulation time
+  width: number;
+  height: number;
+  tiles: Tile[][];
   entities: Record<string, Entity>;
   npcs: Record<string, NPC>;
   resources: Record<string, Resource>;

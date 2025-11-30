@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import type { WorldState, Entity, NPC } from '../types/world';
-import { getEntityColor, getEntitySymbol } from '../utils/entityUtils';
+import { getEntityColor, getEntitySymbol, BIOME_COLORS } from '../utils/entityUtils';
 
 export interface CanvasTransform {
   scale: number;
@@ -55,6 +55,25 @@ export function useCanvas(
     // Apply transformations
     ctx.translate(transform.offset.x, transform.offset.y);
     ctx.scale(transform.scale, transform.scale);
+    
+    // Draw Terrain
+    if (worldState.tiles && worldState.tiles.length > 0) {
+        const startX = Math.floor(-transform.offset.x / transform.scale / TILE_SIZE);
+        const startY = Math.floor(-transform.offset.y / transform.scale / TILE_SIZE);
+        const endX = startX + (canvas.width / transform.scale / TILE_SIZE) + 1;
+        const endY = startY + (canvas.height / transform.scale / TILE_SIZE) + 1;
+
+        for (let y = Math.max(0, startY); y < Math.min(worldState.height || 100, endY); y++) {
+            for (let x = Math.max(0, startX); x < Math.min(worldState.width || 100, endX); x++) {
+                const tile = worldState.tiles[y]?.[x];
+                if (tile) {
+                    const biomeData = BIOME_COLORS[tile.biome];
+                    ctx.fillStyle = biomeData?.color || '#1a1a2e';
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+    }
 
     // Draw Grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';

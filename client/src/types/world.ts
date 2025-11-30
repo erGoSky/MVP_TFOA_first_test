@@ -62,9 +62,22 @@ export interface Building extends Entity {
   inventory: InventoryItem[];
 }
 
+export type BiomeType = 'forest' | 'plains' | 'desert' | 'mountain' | 'swamp' | 'water';
+
+export interface Tile {
+  x: number;
+  y: number;
+  biome: BiomeType;
+  elevation: number;
+  moisture: number;
+}
+
 export interface WorldState {
   tick: number;
   time: number;
+  width: number;
+  height: number;
+  tiles: Tile[][];
   npcs: Record<string, NPC>;
   resources: Record<string, Resource>;
   buildings: Record<string, Building>;

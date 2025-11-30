@@ -57,6 +57,9 @@ export class WorldManager {
     this.state = {
       tick: 0,
       time: 0,
+      width: 100,
+      height: 100,
+      tiles: [],
       entities: {},
       npcs: {},
       resources: {},
@@ -112,7 +115,7 @@ export class WorldManager {
     console.log(`Created NPC ${name} with personality: ${PersonalityGenerator.describe(npc.personality)} (${npc.personality.archetype})`);
   }
 
-  public createResource(id: string, type: string, position: Vector2, amount: number, properties: any = { value: 1 }) {
+  public createResource(id: string, type: any, position: Vector2, amount: number, properties: any = { value: 1 }) {
     const res: Resource = {
       id,
       type: 'resource',
@@ -538,6 +541,9 @@ export class WorldManager {
     this.state = {
       tick: 0,
       time: 0,
+      width: 100,
+      height: 100,
+      tiles: [],
       entities: {},
       npcs: {},
       resources: {},
