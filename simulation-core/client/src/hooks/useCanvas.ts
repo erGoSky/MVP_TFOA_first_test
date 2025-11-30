@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import type { WorldState, Entity, NPC } from '../types/world';
+import { getEntityColor, getEntitySymbol } from '../utils/entityUtils';
 
 export interface CanvasTransform {
   scale: number;
@@ -18,25 +19,6 @@ export function useCanvas(
   // Internal state for dragging
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
-
-  // Helper functions for colors
-  const getEntityColor = (entity: Entity) => {
-    switch (entity.type) {
-      case 'npc': return '#4CAF50';
-      case 'building': return '#FFC107';
-      case 'resource': return '#2196F3';
-      default: return '#9E9E9E';
-    }
-  };
-
-  const getEntitySymbol = (entity: Entity) => {
-    switch (entity.type) {
-      case 'npc': return '👨‍🌾'; // Farmer/worker icon for NPCs
-      case 'building': return '🏛️'; // Classical building for structures
-      case 'resource': return '🪵'; // Wood/resource icon
-      default: return '❓';
-    }
-  };
 
   // Handle resizing
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });

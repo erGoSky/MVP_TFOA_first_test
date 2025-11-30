@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { WorldState, Entity } from '../../types/world';
 import { PinnedCard } from './PinnedCard';
+import { ENTITY_ICONS } from '../../utils/entityUtils';
 import './Sidebar.scss';
 
 interface SidebarProps {
@@ -73,26 +74,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ worldState, pinnedEntities, on
           <span>Legend</span>
           <span className="toggle-icon">{collapsed.legend ? '▼' : '▲'}</span>
         </div>
+
+
         {!collapsed.legend && (
           <div className="legend">
             <div className="legend-item">
-              <div className="legend-icon">👨‍🌾</div>
+              <div className="legend-icon">{ENTITY_ICONS.NPC}</div>
               <div>NPCs</div>
             </div>
             <div className="legend-item">
-              <div className="legend-icon">🏛️</div>
+              <div className="legend-icon">{ENTITY_ICONS.BUILDING}</div>
               <div>Buildings</div>
             </div>
             <div className="legend-item">
-              <div className="legend-icon">🪵</div>
+              <div className="legend-icon">{ENTITY_ICONS.TREE}</div>
               <div>Wood</div>
             </div>
             <div className="legend-item">
-              <div className="legend-icon">⛰️</div>
+              <div className="legend-icon">{ENTITY_ICONS.ROCK}</div>
               <div>Stone/Ore</div>
             </div>
             <div className="legend-item">
-              <div className="legend-icon">🌾</div>
+              <div className="legend-icon">{ENTITY_ICONS.FOOD}</div>
               <div>Food</div>
             </div>
           </div>

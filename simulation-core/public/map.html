@@ -66,23 +66,23 @@
             <div class="info-panel">
                 <div class="info-title">Legend</div>
                 <div class="legend">
-                    <div class="legend-color" style="background: #4CAF50;"></div>
+                    <div class="legend-icon">👨‍🌾</div>
                     <div>NPCs</div>
 
-                    <div class="legend-color" style="background: #8B4513;"></div>
+                    <div class="legend-icon">🌲</div>
                     <div>Trees</div>
 
-                    <div class="legend-color" style="background: #808080;"></div>
+                    <div class="legend-icon">🪨</div>
                     <div>Rocks/Ore</div>
 
-                    <div class="legend-color" style="background: #FF6B6B;"></div>
+                    <div class="legend-icon">🌾</div>
                     <div>Berries/Food</div>
 
-                    <div class="legend-color" style="background: #964B00;"></div>
+                    <div class="legend-icon">🏛️</div>
                     <div>Buildings</div>
 
-                    <div class="legend-color" style="background: #FFD700;"></div>
-                    <div>Special Resources</div>
+                    <div class="legend-icon">🪵</div>
+                    <div>Resources</div>
                 </div>
             </div>
 
@@ -114,6 +114,30 @@
             water: '#4169E1',
             default: '#FFD700'
         };
+
+        // Icon mapping matching entityUtils.ts
+        const ENTITY_ICONS = {
+            NPC: '👨‍🌾',
+            BUILDING: '🏛️',
+            RESOURCE: '🪵',
+            UNKNOWN: '❓',
+            TREE: '🌲',
+            ROCK: '🪨',
+            FOOD: '🌾',
+        };
+
+        function getEntitySymbol(entity) {
+            if (entity.entityType === 'npc' || entity.type === 'npc') return ENTITY_ICONS.NPC;
+            if (entity.entityType === 'building' || entity.type === 'building') return ENTITY_ICONS.BUILDING;
+            if (entity.entityType === 'resource' || entity.type === 'resource') {
+                const type = (entity.resourceType || '').toLowerCase();
+                if (type.includes('tree') || type.includes('wood')) return ENTITY_ICONS.TREE;
+                if (type.includes('rock') || type.includes('stone') || type.includes('ore')) return ENTITY_ICONS.ROCK;
+                if (type.includes('food') || type.includes('berry') || type.includes('wheat')) return ENTITY_ICONS.FOOD;
+                return ENTITY_ICONS.RESOURCE;
+            }
+            return ENTITY_ICONS.UNKNOWN;
+        }
 
         function getEntityColor(entity) {
             if (entity.type === 'npc') return colors.npc;
@@ -172,7 +196,7 @@
             const health = npc.stats.health;
 
             return `
-                <div class="hover-card-title">👤 ${npc.name}</div>
+                <div class="hover-card-title">${getEntitySymbol(npc)} ${npc.name}</div>
                 <div class="hover-card-section">
                     <div class="hover-card-label">Current Action:</div>
                     <div class="hover-card-value">${npc.currentAction || 'idle'}</div>
@@ -214,7 +238,7 @@
 
         function createResourceCard(resource) {
             return `
-                <div class="hover-card-title">🌿 ${resource.resourceType}</div>
+                <div class="hover-card-title">${getEntitySymbol(resource)} ${resource.resourceType}</div>
                 <div class="hover-card-section">
                     <div class="hover-card-label">Amount:</div>
                     <div class="hover-card-value">${resource.amount}</div>
@@ -234,7 +258,7 @@
 
         function createBuildingCard(building) {
             return `
-                <div class="hover-card-title">🏠 ${building.buildingType}</div>
+                <div class="hover-card-title">${getEntitySymbol(building)} ${building.buildingType}</div>
                 <div class="hover-card-section">
                     <div class="hover-card-label">📍 Position:</div>
                     <div class="hover-card-value">(${building.position.x.toFixed(1)}, ${building.position.y.toFixed(1)})</div>
@@ -348,13 +372,23 @@
                 const x = Math.floor(resource.position.x) * CELL_SIZE;
                 const y = Math.floor(resource.position.y) * CELL_SIZE;
 
+                // Draw background circle
                 ctx.fillStyle = getEntityColor(resource);
-                ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                ctx.beginPath();
+                ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw icon
+                ctx.fillStyle = '#000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(getEntitySymbol({...resource, entityType: 'resource'}), x + CELL_SIZE / 2, y + CELL_SIZE / 2);
 
                 // Amount indicator
                 if (resource.amount > 1) {
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = '10px Arial';
+                    ctx.font = '8px Arial';
                     ctx.fillText(resource.amount, x + 4, y + 12);
                 }
             });
@@ -367,10 +401,12 @@
                 ctx.fillStyle = getEntityColor(building);
                 ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
 
-                // Label
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 10px Arial';
-                ctx.fillText(building.buildingType[0].toUpperCase(), x + 4, y + 12);
+                // Draw icon
+                ctx.fillStyle = '#000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(getEntitySymbol({...building, entityType: 'building'}), x + CELL_SIZE / 2, y + CELL_SIZE / 2);
             });
 
             // Draw NPCs (on top)
@@ -383,10 +419,12 @@
                 ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Name
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '8px Arial';
-                ctx.fillText(npc.name[0], x + 5, y + 11);
+                // Draw icon
+                ctx.fillStyle = '#000';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(getEntitySymbol({...npc, entityType: 'npc'}), x + CELL_SIZE / 2, y + CELL_SIZE / 2);
             });
         }
 
@@ -537,11 +575,11 @@
                 title.className = 'pinned-card-title-text';
                 
                 if (currentEntity.entityType === 'npc') {
-                    title.textContent = `👤 ${currentEntity.name}`;
+                    title.textContent = `${getEntitySymbol(currentEntity)} ${currentEntity.name}`;
                 } else if (currentEntity.entityType === 'building') {
-                    title.textContent = `🏠 ${currentEntity.buildingType}`;
+                    title.textContent = `${getEntitySymbol(currentEntity)} ${currentEntity.buildingType}`;
                 } else if (currentEntity.entityType === 'resource') {
-                    title.textContent = `🌿 ${currentEntity.resourceType}`;
+                    title.textContent = `${getEntitySymbol(currentEntity)} ${currentEntity.resourceType}`;
                 }
 
                 headerLeft.appendChild(toggle);

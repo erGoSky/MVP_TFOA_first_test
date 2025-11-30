@@ -65,9 +65,6 @@ export interface InventoryItem {
 export interface Resource extends Entity {
   type: 'resource';
   resourceType: string; 
-  // Flora: 'bush_berry', 'flower_honey', 'plant_fiber', 'mushroom_red', 'mushroom_brown', 'herb_healing', 'herb_poison', 'tree_oak', 'tree_pine', 'tree_apple'
-  // Minerals: 'rock_stone', 'ore_iron', 'ore_coal', 'ore_gold', 'clay_patch', 'crystal_blue'
-  // Misc: 'water_source', 'fallen_log', 'loose_stones', 'wild_wheat'
   amount: number;
   harvested: boolean;
   properties: {

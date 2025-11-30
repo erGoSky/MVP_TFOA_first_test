@@ -1,0 +1,64 @@
+# Dependencies
+**/node_modules/
+**/.venv/
+**/venv/
+**/env/
+
+# Build outputs
+**/dist/
+**/build/
+**/.next/
+**/out/
+**/public/
+**/*.js.map
+**/*.css.map
+
+# Godot engine files
+**/.godot/
+**/.import/
+**/export/
+**/export_presets.cfg
+
+# IDE and editor files
+**/.vscode/
+**/.idea/
+**/.vs/
+**/*.swp
+**/*.swo
+**/*~
+
+# Logs and temporary files
+**/*.log
+**/logs/
+**/tmp/
+**/temp/
+**/.cache/
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
+**/desktop.ini
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Package manager files
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Environment files (keep .env.example visible)
+**/.env.local
+**/.env.*.local
+
+# Coverage reports
+**/coverage/
+**/.nyc_output/
+
+# Misc
+**/.git/

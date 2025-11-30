@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Entity } from '../../types/world';
 import { EntityCard } from './EntityCard';
+import { getEntitySymbol } from '../../utils/entityUtils';
 import './BaseEntityCard.scss';
 
 interface BaseEntityCardProps {
@@ -15,15 +16,6 @@ export const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
   onUnpin 
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-
-  const getEntityIcon = () => {
-    switch (entity.type) {
-      case 'npc': return '👤';
-      case 'building': return '🏠';
-      case 'resource': return '🌿';
-      default: return '❓';
-    }
-  };
 
   const getEntityName = () => {
     if (entity.type === 'npc') return (entity as any).name;
@@ -45,7 +37,7 @@ export const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
             <div className="toggle-icon"
               onClick={isPinned ? () => setCollapsed(!collapsed) : undefined}>{collapsed ? '▶' : '▼'}</div>
           )}
-          <span className="entity-icon">{getEntityIcon()}</span>
+          <span className="entity-icon">{getEntitySymbol(entity)}</span>
           <span className="entity-name">{getEntityName()}</span>
         </div>
         {isPinned && onUnpin && (
