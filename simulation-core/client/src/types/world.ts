@@ -1,0 +1,76 @@
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
+export interface Needs {
+  hunger: number;
+  energy: number;
+  social: number;
+}
+
+export interface Stats {
+  health: number;
+  money: number;
+  speed: number;
+}
+
+export interface Skills {
+  gathering: number;
+  crafting: number;
+  trading: number;
+}
+
+export interface InventoryItem {
+  id: string;
+  type: string;
+  quantity: number;
+}
+
+export interface Entity {
+  id: string;
+  type: 'npc' | 'building' | 'resource';
+  position: Vector2;
+}
+
+export interface NPC extends Entity {
+  type: 'npc';
+  name: string;
+  needs: Needs;
+  stats: Stats;
+  skills: Skills;
+  currentAction: string | null;
+  inventory: InventoryItem[];
+  ownedBuildingIds: string[];
+}
+
+export interface Resource extends Entity {
+  type: 'resource';
+  resourceType: string;
+  amount: number;
+  properties: {
+    value: number;
+    edible?: boolean;
+    craftingMaterial?: boolean;
+  };
+}
+
+export interface Building extends Entity {
+  type: 'building';
+  buildingType: string;
+  gold: number;
+  inventory: InventoryItem[];
+}
+
+export interface WorldState {
+  tick: number;
+  time: number;
+  npcs: Record<string, NPC>;
+  resources: Record<string, Resource>;
+  buildings: Record<string, Building>;
+}
+
+export interface SimulationStatus {
+  paused: boolean;
+  speed: number;
+}

@@ -1,0 +1,33 @@
+@use 'variables' as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: $gradient-primary;
+  color: $text-light;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+// Global utility classes
+.container {
+  padding: $spacing-lg;
+  max-width: 1600px;
+  margin: 0 auto;
+}

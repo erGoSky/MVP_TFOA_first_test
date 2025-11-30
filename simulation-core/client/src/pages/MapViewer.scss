@@ -1,0 +1,53 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.map-viewer-page {
+  // Allow map to be background
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  .map-container {
+    // Map is fixed, so this container is just a placeholder or for event handling
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; // Let clicks pass through to canvas if needed, but canvas handles its own events
+  }
+
+  .canvas-wrapper {
+    // Canvas is fixed, this wrapper might not be needed for layout anymore
+    // but we keep it for structure
+    pointer-events: auto; // Re-enable pointer events for interactions
+  }
+
+  .sidebar {
+    position: fixed;
+    right: $spacing-lg;
+    top: 100px; // Below nav
+    bottom: $spacing-lg;
+    width: 300px;
+    z-index: 10;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  .loading-screen, .error-screen {
+    @include flex-center;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    font-size: 1.5em;
+    color: $text-light;
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .error-screen {
+    color: #ff6b6b;
+  }
+}

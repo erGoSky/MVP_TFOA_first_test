@@ -1,0 +1,14 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.dashboard-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; // Allow clicks to pass through to map
+
+  // Re-enable pointer events for grid
+  .npc-grid {
+    pointer-events: auto;
+  }
+}

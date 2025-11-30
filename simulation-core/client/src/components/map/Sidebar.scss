@@ -1,0 +1,110 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.sidebar {
+  width: 350px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  // Height and positioning handled in MapViewer.scss
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    @include glassmorphism;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $border-radius-md;
+    
+    h3 {
+      margin: 0;
+      font-size: 1.1em;
+      color: $text-light;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: $text-light;
+      font-size: 1.2em;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .info-panel {
+    @include glassmorphism;
+    padding: $spacing-md;
+    border-radius: $border-radius-md;
+    transition: all 0.3s ease;
+
+    &.collapsed {
+      padding-bottom: $spacing-sm;
+    }
+
+    .info-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: $spacing-md;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+
+      .toggle-icon {
+        font-size: 0.8em;
+        opacity: 0.7;
+      }
+    }
+
+    .stat-row {
+      @include flex-between;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      
+      span:first-child {
+        opacity: 0.8;
+      }
+      
+      span:last-child {
+        font-weight: bold;
+      }
+    }
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85em;
+    }
+
+    .legend-icon {
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+    }
+  }
+
+  .pinned-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+}

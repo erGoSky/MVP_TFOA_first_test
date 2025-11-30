@@ -1,0 +1,37 @@
+// Colors
+$primary-color: #1e3c72;
+$secondary-color: #2a5298;
+$accent-color: #4ecdc4;
+$text-light: #ffffff;
+$text-dark: #333333;
+$bg-dark: #1a1a2e;
+$bg-panel: rgba(255, 255, 255, 0.1);
+$bg-panel-hover: rgba(255, 255, 255, 0.2);
+
+// Gradients
+$gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+$gradient-stat-hunger: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+$gradient-stat-energy: linear-gradient(90deg, #4ecdc4, #44a08d);
+$gradient-stat-health: linear-gradient(90deg, #f093fb, #f5576c);
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 15px;
+$spacing-lg: 20px;
+$spacing-xl: 30px;
+
+// Borders & Radius
+$border-radius-sm: 5px;
+$border-radius-md: 10px;
+$border-radius-lg: 15px;
+$border-light: 1px solid rgba(255, 255, 255, 0.18);
+
+// Shadows
+$shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+$shadow-nav: 0 2px 10px rgba(0, 0, 0, 0.3);
+
+// Z-Indices
+$z-nav: 100;
+$z-controls: 100;
+$z-hover-card: 1000;

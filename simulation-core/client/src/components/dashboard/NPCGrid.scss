@@ -1,0 +1,15 @@
+@use '../../styles/variables' as *;
+
+.npc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: $spacing-lg;
+  margin-top: $spacing-lg;
+}
+
+.npc-grid-empty {
+  text-align: center;
+  padding: $spacing-xl;
+  font-style: italic;
+  opacity: 0.7;
+}

@@ -1,0 +1,62 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.navigation {
+  background: rgba(30, 60, 114, 0.95);
+  padding: $spacing-md $spacing-xl;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: $shadow-nav;
+  margin-bottom: $spacing-lg;
+  z-index: $z-nav;
+  position: relative;
+
+  .nav-links {
+    display: flex;
+    gap: $spacing-lg;
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-link {
+    color: $text-light;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: $border-radius-sm;
+    transition: background 0.3s;
+    font-weight: 500;
+
+    &:hover {
+      background: $bg-panel;
+    }
+
+    &.active {
+      color: $accent-color;
+      font-weight: bold;
+      border-bottom: 2px solid $accent-color;
+    }
+  }
+
+  .nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: $text-light;
+    padding: 4px 12px;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: $accent-color;
+    }
+  }
+}

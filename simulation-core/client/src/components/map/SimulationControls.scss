@@ -1,0 +1,79 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.simulation-controls {
+  @include glassmorphism;
+  padding: 5px 15px;
+  border-radius: $border-radius-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: 0; // Remove margin when in header
+
+  .control-panel-title {
+    display: none; // Hide title in header
+  }
+
+  .control-buttons {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: 0;
+
+    .control-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: $border-radius-sm;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        background: rgba(76, 175, 80, 0.6);
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+      }
+
+      &.pause-btn.active {
+        background: rgba(255, 193, 7, 0.6);
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .speed-buttons {
+    display: flex;
+    gap: 5px;
+
+    .speed-btn {
+      flex: 1;
+      padding: 5px;
+      border: none;
+      border-radius: $border-radius-sm;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 0.9em;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      &.active {
+        background: $accent-color;
+        color: $bg-dark;
+        font-weight: bold;
+      }
+    }
+  }
+}

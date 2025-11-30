@@ -1,0 +1,32 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.stats-header {
+  display: flex;
+  align-items: center;
+
+  .stats-bar {
+    display: flex;
+    gap: $spacing-lg;
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: $text-light;
+      font-size: 0.9em;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px 12px;
+      border-radius: $border-radius-sm;
+
+      .label {
+        opacity: 0.7;
+      }
+
+      .value {
+        font-weight: bold;
+        color: $accent-color;
+      }
+    }
+  }
+}

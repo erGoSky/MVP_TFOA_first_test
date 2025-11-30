@@ -1,0 +1,39 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.hover-card {
+  position: fixed;
+  width: 280px;
+  pointer-events: none; // Allow clicks to pass through to canvas
+  z-index: $z-hover-card;
+  color: $text-light;
+
+  .hover-card-nav {
+    @include flex-between;
+    margin-bottom: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: $border-radius-sm $border-radius-sm 0 0;
+    border: 1px solid $accent-color;
+    border-bottom: none;
+    pointer-events: auto; // Re-enable clicks for buttons
+
+    button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  // When there's navigation, adjust the card border radius
+  .hover-card-nav + .base-entity-card {
+    border-radius: 0 0 $border-radius-sm $border-radius-sm;
+  }
+}

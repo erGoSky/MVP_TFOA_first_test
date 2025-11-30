@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map - TFOA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        nav {
+            background: rgba(30, 60, 114, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        nav a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        nav a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .map-container {
+            flex: 1;
+            overflow: auto;
+            background: #0f0f1e;
+            position: relative;
+        }
+
+        canvas {
+            border: 2px solid #444;
+            image-rendering: pixelated;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(30, 60, 114, 0.5);
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 2px solid #444;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid #ffffff50;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(30, 60, 114, 0.95);
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 10px 15px;
+            z-index: 100;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-panel-title {
+            font-size: 1em;
+            font-weight: bold;
+            color: #4ecdc4;
+            white-space: nowrap;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            background: rgba(76, 175, 80, 0.8);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .control-btn:hover {
+            background: rgba(76, 175, 80, 1);
+            transform: translateY(-2px);
+        }
+
+        .control-btn.pause-btn {
+            background: rgba(244, 67, 54, 0.8);
+        }
+
+        .control-btn.pause-btn:hover {
+            background: rgba(244, 67, 54, 1);
+        }
+
+        .control-btn.active {
+            background: rgba(33, 150, 243, 1);
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .speed-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .speed-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .speed-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .speed-btn.active {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 8px rgba(78, 205, 196, 0.5);
+        }
+
+        /* Hover Tooltip Card */
+        .hover-card {
+            position: absolute;
+            background: rgba(30, 60, 114, 0.98);
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .hover-card-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hover-nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .hover-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .hover-nav-info {
+            font-size: 11px;
+            color: #ccc;
+        }
+
+        /* Pinned Cards Container */
+        .pinned-cards-container {
+            margin-top: 15px;
+        }
+
+        .pinned-card {
+            background: rgba(30, 60, 114, 0.98);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .pinned-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            cursor: pointer;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+            transition: background 0.3s;
+        }
+
+        .pinned-card-header:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .pinned-card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .pinned-card-toggle {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+            user-select: none;
+        }
+
+        .pinned-card.collapsed .pinned-card-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .pinned-card-title-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .pinned-card-close {
+            background: rgba(244, 67, 54, 0.8);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .pinned-card-close:hover {
+            background: rgba(244, 67, 54, 1);
+            transform: scale(1.1);
+        }
+
+        .pinned-card-content {
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .pinned-card.collapsed .pinned-card-content {
+            max-height: 0;
+            padding: 0 15px;
+            overflow: hidden;
+        }
+
+        .hover-card-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+            border-bottom: 2px solid #4ecdc4;
+            padding-bottom: 5px;
+        }
+
+        .hover-card-section {
+            margin: 10px 0;
+        }
+
+        .hover-card-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .hover-card-value {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .hover-stat-bar {
+            background: rgba(0, 0, 0, 0.3);
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .hover-stat-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            transition: width 0.3s ease;
+        }
+
+        .hover-stat-fill.hunger { background: linear-gradient(90deg, #ff6b6b, #ee5a6f); }
+        .hover-stat-fill.energy { background: linear-gradient(90deg, #4ecdc4, #44a08d); }
+        .hover-stat-fill.health { background: linear-gradient(90deg, #f093fb, #f5576c); }
+
+        .hover-inventory-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .hover-inventory-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">📊 Dashboard</a>
+        <a href="/map" class="active">🗺️ Map</a>
+    </nav>
+
+    <div class="container">
+        <div class="map-container">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="control-panel-title">⚙️ Simulation Control</div>
+                <div class="control-buttons">
+                    <button id="playBtn" class="control-btn">▶️ Play</button>
+                    <button id="pauseBtn" class="control-btn pause-btn">⏸️ Pause</button>
+                </div>
+                <div class="speed-buttons">
+                    <button class="speed-btn" data-speed="1">x1</button>
+                    <button class="speed-btn" data-speed="2">x2</button>
+                    <button class="speed-btn" data-speed="4">x4</button>
+                    <button class="speed-btn" data-speed="8">x8</button>
+                    <button class="speed-btn" data-speed="16">x16</button>
+                </div>
+            </div>
+
+            <canvas id="worldCanvas" width="1600" height="1600"></canvas>
+            <div id="hoverCard" class="hover-card"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="info-panel">
+                <div class="info-title">World Info</div>
+                <div class="stat-row">
+                    <span>Grid Size:</span>
+                    <span>100 x 100</span>
+                </div>
+                <div class="stat-row">
+                    <span>Cell Size:</span>
+                    <span>16px</span>
+                </div>
+                <div class="stat-row">
+                    <span>Tick:</span>
+                    <span id="tick">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>NPCs:</span>
+                    <span id="npcCount">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Resources:</span>
+                    <span id="resourceCount">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Buildings:</span>
+                    <span id="buildingCount">0</span>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="info-title">Legend</div>
+                <div class="legend">
+                    <div class="legend-color" style="background: #4CAF50;"></div>
+                    <div>NPCs</div>
+
+                    <div class="legend-color" style="background: #8B4513;"></div>
+                    <div>Trees</div>
+
+                    <div class="legend-color" style="background: #808080;"></div>
+                    <div>Rocks/Ore</div>
+
+                    <div class="legend-color" style="background: #FF6B6B;"></div>
+                    <div>Berries/Food</div>
+
+                    <div class="legend-color" style="background: #964B00;"></div>
+                    <div>Buildings</div>
+
+                    <div class="legend-color" style="background: #FFD700;"></div>
+                    <div>Special Resources</div>
+                </div>
+            </div>
+
+            <!-- Pinned Cards in Sidebar -->
+            <div id="pinnedCardsContainer" class="pinned-cards-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('worldCanvas');
+        const ctx = canvas.getContext('2d');
+        const hoverCard = document.getElementById('hoverCard');
+        const CELL_SIZE = 16;
+        const GRID_SIZE = 100;
+
+        let worldState = null;
+        let hoveredEntity = null;
+
+        // Color mapping for entities
+        const colors = {
+            npc: '#4CAF50',
+            tree: '#8B4513',
+            rock: '#808080',
+            ore: '#808080',
+            berry: '#FF6B6B',
+            mushroom: '#D946D9',
+            building: '#964B00',
+            tavern: '#FFA500',
+            water: '#4169E1',
+            default: '#FFD700'
+        };
+
+        function getEntityColor(entity) {
+            if (entity.type === 'npc') return colors.npc;
+            if (entity.type === 'building') {
+                return entity.buildingType === 'tavern' ? colors.tavern : colors.building;
+            }
+            if (entity.type === 'resource') {
+                const type = entity.resourceType;
+                if (type.includes('tree')) return colors.tree;
+                if (type.includes('rock') || type.includes('ore')) return colors.ore;
+                if (type.includes('berry') || type.includes('food')) return colors.berry;
+                if (type.includes('mushroom')) return colors.mushroom;
+                if (type.includes('water')) return colors.water;
+            }
+            return colors.default;
+        }
+
+        function getEntitiesAtPosition(gridX, gridY) {
+            if (!worldState) return [];
+
+            const entities = [];
+
+            // Check NPCs
+            for (const npc of Object.values(worldState.npcs)) {
+                const npcX = Math.floor(npc.position.x);
+                const npcY = Math.floor(npc.position.y);
+                if (npcX === gridX && npcY === gridY) {
+                    entities.push({ ...npc, entityType: 'npc' });
+                }
+            }
+
+            // Check Buildings
+            for (const building of Object.values(worldState.buildings)) {
+                const buildingX = Math.floor(building.position.x);
+                const buildingY = Math.floor(building.position.y);
+                if (buildingX === gridX && buildingY === gridY) {
+                    entities.push({ ...building, entityType: 'building' });
+                }
+            }
+
+            // Check Resources
+            for (const resource of Object.values(worldState.resources)) {
+                const resX = Math.floor(resource.position.x);
+                const resY = Math.floor(resource.position.y);
+                if (resX === gridX && resY === gridY) {
+                    entities.push({ ...resource, entityType: 'resource' });
+                }
+            }
+
+            return entities;
+        }
+
+        function createNPCCard(npc) {
+            const hunger = (1 - npc.needs.hunger) * 100;
+            const energy = npc.needs.energy * 100;
+            const health = npc.stats.health;
+
+            return `
+                <div class="hover-card-title">👤 ${npc.name}</div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">Current Action:</div>
+                    <div class="hover-card-value">${npc.currentAction || 'idle'}</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">🍖 Hunger: ${hunger.toFixed(0)}%</div>
+                    <div class="hover-stat-bar">
+                        <div class="hover-stat-fill hunger" style="width: ${hunger}%">${hunger.toFixed(0)}%</div>
+                    </div>
+                    <div class="hover-card-label">⚡ Energy: ${energy.toFixed(0)}%</div>
+                    <div class="hover-stat-bar">
+                        <div class="hover-stat-fill energy" style="width: ${energy}%">${energy.toFixed(0)}%</div>
+                    </div>
+                    <div class="hover-card-label">❤️ Health: ${health}%</div>
+                    <div class="hover-stat-bar">
+                        <div class="hover-stat-fill health" style="width: ${health}%">${health.toFixed(0)}%</div>
+                    </div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">💰 Money:</div>
+                    <div class="hover-card-value">${npc.stats.money} gold</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">📍 Position:</div>
+                    <div class="hover-card-value">(${npc.position.x.toFixed(1)}, ${npc.position.y.toFixed(1)})</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">⛏️ Skills:</div>
+                    <div class="hover-card-value">Gathering: ${npc.skills.gathering} | Crafting: ${npc.skills.crafting} | Trading: ${npc.skills.trading}</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">🎒 Inventory (${npc.inventory.length} items):</div>
+                    <div class="hover-inventory-items">
+                        ${npc.inventory.map(item => `<div class="hover-inventory-item">${item.type} x${item.quantity}</div>`).join('') || '<div class="hover-inventory-item">Empty</div>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createResourceCard(resource) {
+            return `
+                <div class="hover-card-title">🌿 ${resource.resourceType}</div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">Amount:</div>
+                    <div class="hover-card-value">${resource.amount}</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">📍 Position:</div>
+                    <div class="hover-card-value">(${resource.position.x.toFixed(1)}, ${resource.position.y.toFixed(1)})</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">Value:</div>
+                    <div class="hover-card-value">${resource.properties.value} gold</div>
+                </div>
+                ${resource.properties.edible ? '<div class="hover-card-section"><div class="hover-card-value">🍖 Edible</div></div>' : ''}
+                ${resource.properties.craftingMaterial ? '<div class="hover-card-section"><div class="hover-card-value">🔨 Crafting Material</div></div>' : ''}
+            `;
+        }
+
+        function createBuildingCard(building) {
+            return `
+                <div class="hover-card-title">🏠 ${building.buildingType}</div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">📍 Position:</div>
+                    <div class="hover-card-value">(${building.position.x.toFixed(1)}, ${building.position.y.toFixed(1)})</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">💰 Gold:</div>
+                    <div class="hover-card-value">${building.gold || 0}</div>
+                </div>
+                <div class="hover-card-section">
+                    <div class="hover-card-label">📦 Inventory:</div>
+                    <div class="hover-inventory-items">
+                        ${building.inventory.map(item => `<div class="hover-inventory-item">${item.type} x${item.quantity}</div>`).join('') || '<div class="hover-inventory-item">Empty</div>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHoverCardContent() {
+            if (!hoveredEntitiesList || hoveredEntitiesList.length === 0) return;
+            
+            const entity = hoveredEntitiesList[currentHoverIndex];
+            let content = '';
+
+            // Add navigation if multiple entities
+            if (hoveredEntitiesList.length > 1) {
+                content += `
+                    <div class="hover-card-nav">
+                        <button class="hover-nav-btn" onclick="cycleHoverCard(-1)">◀</button>
+                        <span class="hover-nav-info">${currentHoverIndex + 1} / ${hoveredEntitiesList.length}</span>
+                        <button class="hover-nav-btn" onclick="cycleHoverCard(1)">▶</button>
+                    </div>
+                `;
+            }
+
+            if (entity.entityType === 'npc') {
+                content += createNPCCard(entity);
+            } else if (entity.entityType === 'resource') {
+                content += createResourceCard(entity);
+            } else if (entity.entityType === 'building') {
+                content += createBuildingCard(entity);
+            }
+
+            hoverCard.innerHTML = content;
+        }
+
+        // Global function for button clicks
+        window.cycleHoverCard = function(direction) {
+            if (hoveredEntitiesList.length > 1) {
+                currentHoverIndex = (currentHoverIndex + direction + hoveredEntitiesList.length) % hoveredEntitiesList.length;
+                updateHoverCardContent();
+            }
+        };
+
+        function showHoverCard(entities, mouseX, mouseY, updatePositionOnly = false) {
+            if (!entities || entities.length === 0) {
+                hoverCard.style.display = 'none';
+                return;
+            }
+
+            if (!updatePositionOnly) {
+                updateHoverCardContent();
+            }
+            
+            hoverCard.style.display = 'block';
+
+            // Position the card near the mouse, but keep it on screen
+            const cardRect = hoverCard.getBoundingClientRect();
+            const containerRect = canvas.parentElement.getBoundingClientRect();
+
+            let left = mouseX + 15;
+            let top = mouseY + 15;
+
+            // Adjust if card would go off-screen
+            if (left + cardRect.width > containerRect.right) {
+                left = mouseX - cardRect.width - 15;
+            }
+            if (top + cardRect.height > containerRect.bottom) {
+                top = mouseY - cardRect.height - 15;
+            }
+
+            hoverCard.style.left = left + 'px';
+            hoverCard.style.top = top + 'px';
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 0.5;
+
+            // Draw vertical lines
+            for (let x = 0; x <= GRID_SIZE; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * CELL_SIZE, 0);
+                ctx.lineTo(x * CELL_SIZE, GRID_SIZE * CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // Draw horizontal lines
+            for (let y = 0; y <= GRID_SIZE; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * CELL_SIZE);
+                ctx.lineTo(GRID_SIZE * CELL_SIZE, y * CELL_SIZE);
+                ctx.stroke();
+            }
+        }
+
+        function drawEntities() {
+            if (!worldState) return;
+
+            // Draw resources
+            Object.values(worldState.resources).forEach(resource => {
+                const x = Math.floor(resource.position.x) * CELL_SIZE;
+                const y = Math.floor(resource.position.y) * CELL_SIZE;
+
+                ctx.fillStyle = getEntityColor(resource);
+                ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+
+                // Amount indicator
+                if (resource.amount > 1) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(resource.amount, x + 4, y + 12);
+                }
+            });
+
+            // Draw buildings
+            Object.values(worldState.buildings).forEach(building => {
+                const x = Math.floor(building.position.x) * CELL_SIZE;
+                const y = Math.floor(building.position.y) * CELL_SIZE;
+
+                ctx.fillStyle = getEntityColor(building);
+                ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+
+                // Label
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(building.buildingType[0].toUpperCase(), x + 4, y + 12);
+            });
+
+            // Draw NPCs (on top)
+            Object.values(worldState.npcs).forEach(npc => {
+                const x = Math.floor(npc.position.x) * CELL_SIZE;
+                const y = Math.floor(npc.position.y) * CELL_SIZE;
+
+                ctx.fillStyle = colors.npc;
+                ctx.beginPath();
+                ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '8px Arial';
+                ctx.fillText(npc.name[0], x + 5, y + 11);
+            });
+        }
+
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#0f0f1e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            drawGrid();
+
+            // Draw entities
+            drawEntities();
+        }
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/state');
+                worldState = await response.json();
+                
+                document.getElementById('tick').textContent = worldState.tick;
+                
+                render();
+            } catch (error) {
+                console.error('Failed to fetch state:', error);
+            }
+        }
+
+        let hoveredEntitiesList = [];
+        let currentHoverIndex = 0;
+
+        // Mouse move handler for hover
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const gridX = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const gridY = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+
+            const entities = getEntitiesAtPosition(gridX, gridY);
+            
+            // Only update if the list of entities has changed significantly (different IDs)
+            // or if we moved to a new cell with different entities
+            const newIds = entities.map(e => e.id).sort().join(',');
+            const oldIds = hoveredEntitiesList.map(e => e.id).sort().join(',');
+            
+            if (newIds !== oldIds) {
+                hoveredEntitiesList = entities;
+                currentHoverIndex = 0;
+                showHoverCard(hoveredEntitiesList, e.clientX, e.clientY);
+            } else if (entities.length > 0) {
+                // Just update position if same entities
+                showHoverCard(hoveredEntitiesList, e.clientX, e.clientY, true);
+            } else {
+                hoveredEntitiesList = [];
+                hoverCard.style.display = 'none';
+            }
+        });
+
+        // Hide card when mouse leaves canvas
+        canvas.addEventListener('mouseleave', () => {
+            hoverCard.style.display = 'none';
+            hoveredEntitiesList = [];
+        });
+
+        // Handle scroll on hover card to cycle entities
+        // We attach this to window or canvas, but check if we are hovering an entity
+        window.addEventListener('wheel', (e) => {
+            if (hoveredEntitiesList.length > 1) {
+                if (e.deltaY > 0) {
+                    currentHoverIndex = (currentHoverIndex + 1) % hoveredEntitiesList.length;
+                } else {
+                    currentHoverIndex = (currentHoverIndex - 1 + hoveredEntitiesList.length) % hoveredEntitiesList.length;
+                }
+                // Re-render card at current mouse position (we might need to track last mouse pos)
+                // For now, just re-render with existing position logic inside showHoverCard if we can
+                // But showHoverCard needs x,y. 
+                // Let's just update the content if the card is visible.
+                if (hoverCard.style.display !== 'none') {
+                    updateHoverCardContent();
+                }
+            }
+        });
+
+        // Auto-refresh every second
+        setInterval(fetchState, 1000);
+
+        // Initial fetch
+        fetchState();
+
+        // Pinned cards management
+        const pinnedCardsContainer = document.getElementById('pinnedCardsContainer');
+        const pinnedEntities = new Map(); // entityId => entity data
+
+        function pinEntity(entity) {
+            if (!entity || pinnedEntities.has(entity.id)) return;
+
+            pinnedEntities.set(entity.id, entity);
+            updatePinnedCards();
+        }
+
+        function unpinEntity(entityId) {
+            pinnedEntities.delete(entityId);
+            updatePinnedCards();
+        }
+
+        function togglePinnedCard(entityId) {
+            const card = document.querySelector(`[data-entity-id="${entityId}"]`);
+            if (card) {
+                card.classList.toggle('collapsed');
+            }
+        }
+
+        function updatePinnedCards() {
+            pinnedCardsContainer.innerHTML = '';
+
+            pinnedEntities.forEach((entity, entityId) => {
+                // Refresh entity data from current world state
+                let currentEntity = entity;
+                if (worldState) {
+                    if (entity.entityType === 'npc' && worldState.npcs[entityId]) {
+                        currentEntity = { ...worldState.npcs[entityId], entityType: 'npc' };
+                        pinnedEntities.set(entityId, currentEntity);
+                    } else if (entity.entityType === 'building' && worldState.buildings[entityId]) {
+                        currentEntity = { ...worldState.buildings[entityId], entityType: 'building' };
+                        pinnedEntities.set(entityId, currentEntity);
+                    } else if (entity.entityType === 'resource' && worldState.resources[entityId]) {
+                        currentEntity = { ...worldState.resources[entityId], entityType: 'resource' };
+                        pinnedEntities.set(entityId, currentEntity);
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = 'pinned-card';
+                card.setAttribute('data-entity-id', entityId);
+
+                // Create card header
+                const header = document.createElement('div');
+                header.className = 'pinned-card-header';
+                header.onclick = () => togglePinnedCard(entityId);
+
+                const headerLeft = document.createElement('div');
+                headerLeft.className = 'pinned-card-header-left';
+
+                const toggle = document.createElement('span');
+                toggle.className = 'pinned-card-toggle';
+                toggle.textContent = '▼';
+
+                const title = document.createElement('span');
+                title.className = 'pinned-card-title-text';
+                
+                if (currentEntity.entityType === 'npc') {
+                    title.textContent = `👤 ${currentEntity.name}`;
+                } else if (currentEntity.entityType === 'building') {
+                    title.textContent = `🏠 ${currentEntity.buildingType}`;
+                } else if (currentEntity.entityType === 'resource') {
+                    title.textContent = `🌿 ${currentEntity.resourceType}`;
+                }
+
+                headerLeft.appendChild(toggle);
+                headerLeft.appendChild(title);
+
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'pinned-card-close';
+                closeBtn.textContent = '×';
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    unpinEntity(entityId);
+                };
+
+                header.appendChild(headerLeft);
+                header.appendChild(closeBtn);
+
+                // Create card content
+                const content = document.createElement('div');
+                content.className = 'pinned-card-content';
+
+                if (currentEntity.entityType === 'npc') {
+                    content.innerHTML = createNPCCard(currentEntity);
+                } else if (currentEntity.entityType === 'resource') {
+                    content.innerHTML = createResourceCard(currentEntity);
+                } else if (currentEntity.entityType === 'building') {
+                    content.innerHTML = createBuildingCard(currentEntity);
+                }
+
+                card.appendChild(header);
+                card.appendChild(content);
+                pinnedCardsContainer.appendChild(card);
+            });
+        }
+
+        // Make unpinEntity global
+        window.unpinEntity = unpinEntity;
+
+        // Handle canvas clicks to pin entities
+        canvas.addEventListener('click', (e) => {
+            if (hoveredEntitiesList.length > 0) {
+                const entity = hoveredEntitiesList[currentHoverIndex];
+                if (entity) {
+                    pinEntity(entity);
+                }
+            }
+        });
+
+        // Simulation control
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+
+        let currentSpeed = 1;
+        let isPaused = false;
+
+        async function updateSimulationStatus() {
+            try {
+                const response = await fetch('/simulation/status');
+                const status = await response.json();
+                isPaused = status.paused;
+                currentSpeed = status.speed;
+
+                // Update UI
+                playBtn.classList.toggle('active', !isPaused);
+                pauseBtn.classList.toggle('active', isPaused);
+
+                speedBtns.forEach(btn => {
+                    const speed = parseInt(btn.dataset.speed);
+                    btn.classList.toggle('active', speed === currentSpeed);
+                });
+            } catch (error) {
+                console.error('Failed to fetch simulation status:', error);
+            }
+        }
+
+        playBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/simulation/play', { method: 'POST' });
+                await updateSimulationStatus();
+            } catch (error) {
+                console.error('Failed to play simulation:', error);
+            }
+        });
+
+        pauseBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/simulation/pause', { method: 'POST' });
+                await updateSimulationStatus();
+            } catch (error) {
+                console.error('Failed to pause simulation:', error);
+            }
+        });
+
+        speedBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const speed = parseInt(btn.dataset.speed);
+                try {
+                    await fetch('/simulation/speed', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ speed })
+                    });
+                    await updateSimulationStatus();
+                } catch (error) {
+                    console.error('Failed to set speed:', error);
+                }
+            });
+        });
+
+        // Initial status update
+        updateSimulationStatus();
+        setInterval(updateSimulationStatus, 2000); // Update status every 2 seconds
+    </script>
+</body>
+</html>

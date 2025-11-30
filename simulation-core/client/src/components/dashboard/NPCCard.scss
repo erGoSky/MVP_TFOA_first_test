@@ -1,0 +1,128 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.npc-card {
+  @include glassmorphism;
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  @include card-hover;
+
+  .npc-header {
+    @include flex-between;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+
+    .npc-name {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .npc-action {
+      background: rgba(76, 175, 80, 0.5);
+      padding: 5px 10px;
+      border-radius: $border-radius-sm;
+      font-size: 0.85em;
+    }
+  }
+
+  .stat-group {
+    margin: $spacing-md 0;
+
+    .stat-row {
+      margin-bottom: $spacing-sm;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+
+    .stat-bar {
+      background: rgba(0, 0, 0, 0.3);
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .stat-fill {
+      height: 100%;
+      @include flex-center;
+      font-size: 0.75em;
+      font-weight: bold;
+      transition: width 0.5s ease;
+      color: $text-light;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+      &.hunger { background: $gradient-stat-hunger; }
+      &.energy { background: $gradient-stat-energy; }
+      &.health { background: $gradient-stat-health; }
+    }
+  }
+
+  .info-section {
+    .info-row {
+      @include flex-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      .info-label { opacity: 0.8; }
+      .info-value { font-weight: bold; }
+    }
+  }
+
+  .skills-grid {
+    margin-top: $spacing-md;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+
+    .skill-item {
+      text-align: center;
+      padding: 8px;
+      background: $bg-panel;
+      border-radius: $border-radius-sm;
+
+      .skill-name {
+        font-size: 0.75em;
+        opacity: 0.8;
+      }
+
+      .skill-value {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 3px;
+      }
+    }
+  }
+
+  .inventory-section {
+    margin-top: $spacing-md;
+
+    .inventory-title {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .inventory-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .inventory-item {
+        background: $bg-panel-hover;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        white-space: nowrap;
+
+        &.empty {
+          opacity: 0.5;
+          font-style: italic;
+        }
+      }
+    }
+  }
+}

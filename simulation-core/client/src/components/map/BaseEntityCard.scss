@@ -1,0 +1,93 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.base-entity-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid $accent-color;
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  .base-card-header {
+    @include flex-between;
+    padding: $spacing-sm $spacing-md;
+    background: rgba(255, 255, 255, 0.1);
+    user-select: none;
+
+    .header-content {
+      @include flex-center;
+      gap: $spacing-sm;
+      font-weight: bold;
+    }
+
+    .toggle-icon {
+      font-size: 0.8em;
+      opacity: 0.7;
+      width: 15px;
+      padding: 5px;
+      
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: $text-light;
+      font-size: 1.2em;
+      opacity: 0.7;
+      padding: 0 5px;
+      cursor: pointer;
+      
+      &:hover {
+        opacity: 1;
+        color: #ff6b6b;
+      }
+    }
+  }
+
+  .base-card-content {
+    padding: $spacing-md;
+    max-height: 500px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    
+    // Hide scrollbar but keep functionality
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  // Pinned variant specific styles
+  &.pinned {
+    margin-bottom: $spacing-md;
+
+    .base-card-header {
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    &.collapsed {
+      .base-card-content {
+        max-height: 0;
+        padding: 0 $spacing-md;
+        overflow: hidden;
+      }
+    }
+  }
+
+  // Hover variant specific styles
+  &.hover {
+    background: rgba(20, 20, 30, 0.95);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    
+    .base-card-content {
+      max-height: none; // No max height for hover cards
+    }
+  }
+}
