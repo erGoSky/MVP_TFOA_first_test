@@ -1,5 +1,6 @@
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
+@use 'sass:color';
 
 .editor-panel {
   padding: $spacing-sm;
@@ -106,7 +107,7 @@
         cursor: pointer;
         padding: $spacing-sm;
         background: rgba($success-color, 0.2);
-        color: lighten($success-color, 10%);
+        color: color.scale($success-color, $lightness: 10%);
         border: 1px solid rgba($success-color, 0.3);
         transition: all 0.2s;
 

@@ -11,6 +11,7 @@ import { GeneralHandler } from './actions/handlers/general.handler';
 import { CraftingHandler } from './actions/handlers/crafting.handler';
 import { TradingHandler } from './actions/handlers/trading.handler';
 import { HandActions } from './actions/hand-actions';
+import { IdleHandler } from './actions/handlers/idle.handler';
 
 const AI_SERVICE_URL = 'http://localhost:8000';
 
@@ -30,6 +31,7 @@ export class WorldManager {
     const craftingHandler = new CraftingHandler();
     const tradingHandler = new TradingHandler();
     const handActions = new HandActions();
+    const idleHandler = new IdleHandler();
 
     this.actionManager.registerHandler('move', moveHandler);
     this.actionManager.registerHandler('pickup', pickupHandler);
@@ -49,6 +51,8 @@ export class WorldManager {
     ['sell', 'buy'].forEach(act => this.actionManager.registerHandler(act, tradingHandler));
     
     ['place'].forEach(act => this.actionManager.registerHandler(act, handActions));
+    
+    this.actionManager.registerHandler('idle', idleHandler);
 
     this.state = {
       tick: 0,
@@ -95,7 +99,7 @@ export class WorldManager {
       stats: { health: 100, money: 0, speed: 1 },
       skills: initialSkills || { gathering: 10, crafting: 5, trading: 5 },
       personality: PersonalityGenerator.generate(archetype),
-      currentAction: 'idle',
+      currentAction: null,
       actionState: { inProgress: false, startTime: 0, duration: 0 },
       inventory: [],
       hands: null,
@@ -136,7 +140,7 @@ export class WorldManager {
   }
 
   public updateNPC(npc: NPC) {
-      if (!npc.currentAction || npc.currentAction === 'idle') {
+      if (!npc.currentAction) {
         this.decideAction(npc);
         return;
       }
@@ -164,7 +168,7 @@ export class WorldManager {
   }
 
   public resetAction(npc: NPC) {
-      npc.currentAction = 'idle';
+      npc.currentAction = null;
       npc.actionState.inProgress = false;
       npc.actionState.duration = 0;
   }

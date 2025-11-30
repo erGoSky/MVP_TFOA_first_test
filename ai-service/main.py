@@ -4,6 +4,10 @@ from typing import List, Dict, Optional, Any
 import uvicorn
 import numpy as np
 from goap import GOAPPlanner, Action
+import logging
+
+# Disable uvicorn access logs
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 app = FastAPI()
 
@@ -161,6 +165,18 @@ def calculate_utility(data: UtilityRequest):
         if total_utility > max_utility:
             max_utility = total_utility
             best_action = action
+
+    # Detailed logging for decision-making
+    npc_name = data.npc.name
+    hunger = data.npc.needs.hunger
+    energy = data.npc.needs.energy
+    money = data.npc.stats.money
+    inventory_count = len(data.npc.inventory)
+    
+    if best_action:
+        print(f"🤖 [{npc_name}] H:{hunger:.2f} E:{energy:.2f} $:{money} Inv:{inventory_count} → {best_action.name} (U={max_utility:.2f})")
+    else:
+        print(f"⚠️  [{npc_name}] No valid action found! H:{hunger:.2f} E:{energy:.2f} $:{money}")
 
     return {"best_action": best_action, "utility": max_utility}
 
