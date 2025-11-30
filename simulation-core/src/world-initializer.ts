@@ -1,21 +1,21 @@
 import { WorldManager } from './world';
 
 export function initializeTestWorld(world: WorldManager) {
-    // Create 5 diverse NPCs
-    // 1. Expert Gatherer
-    world.createNPC('npc_gatherer', 'Gatherer', { x: 10, y: 10 }, { gathering: 80, crafting: 10, trading: 10 });
+    // Create 5 diverse NPCs with matching personality archetypes
+    // 1. Expert Gatherer - Farmer personality
+    world.createNPC('npc_gatherer', 'Gatherer', { x: 10, y: 10 }, { gathering: 80, crafting: 10, trading: 10 }, 'farmer');
     
-    // 2. Expert Crafter
-    world.createNPC('npc_crafter', 'Crafter', { x: 20, y: 20 }, { gathering: 20, crafting: 80, trading: 20 });
+    // 2. Expert Crafter - Artisan personality
+    world.createNPC('npc_crafter', 'Crafter', { x: 20, y: 20 }, { gathering: 20, crafting: 80, trading: 20 }, 'artisan');
     
-    // 3. Expert Trader
-    world.createNPC('npc_trader', 'Trader', { x: 25, y: 28 }, { gathering: 10, crafting: 10, trading: 80 });
+    // 3. Expert Trader - Merchant personality
+    world.createNPC('npc_trader', 'Trader', { x: 25, y: 28 }, { gathering: 10, crafting: 10, trading: 80 }, 'merchant');
     
-    // 4. Novice
+    // 4. Novice - Random personality
     world.createNPC('npc_novice', 'Novice', { x: 15, y: 15 }, { gathering: 5, crafting: 5, trading: 5 });
     
-    // 5. Veteran
-    world.createNPC('npc_veteran', 'Veteran', { x: 18, y: 18 }, { gathering: 60, crafting: 60, trading: 60 });
+    // 5. Veteran - Adventurer personality
+    world.createNPC('npc_veteran', 'Veteran', { x: 18, y: 18 }, { gathering: 60, crafting: 60, trading: 60 }, 'adventurer');
     
     // Create diverse resources
     const resources = [

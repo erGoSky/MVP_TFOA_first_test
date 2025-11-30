@@ -1,5 +1,6 @@
 import { WorldState, NPC, Vector2, Resource, InventoryItem, Building, Skills, BuildingTemplate, Contract, ContractStatus } from './types';
 import axios from 'axios';
+import { PersonalityGenerator } from './personality/generator';
 import { ActionManager } from './actions/action-manager';
 import { MoveHandler } from './actions/handlers/move.handler';
 import { PickupHandler } from './actions/handlers/pickup.handler';
@@ -84,7 +85,7 @@ export class WorldManager {
       }
   };
 
-  public createNPC(id: string, name: string, position: Vector2, initialSkills?: Skills) {
+  public createNPC(id: string, name: string, position: Vector2, initialSkills?: Skills, archetype?: string) {
     const npc: NPC = {
       id,
       type: 'npc',
@@ -93,6 +94,7 @@ export class WorldManager {
       needs: { hunger: 0, energy: 1, social: 0.5 },
       stats: { health: 100, money: 0, speed: 1 },
       skills: initialSkills || { gathering: 10, crafting: 5, trading: 5 },
+      personality: PersonalityGenerator.generate(archetype),
       currentAction: 'idle',
       actionState: { inProgress: false, startTime: 0, duration: 0 },
       inventory: [],
@@ -101,6 +103,9 @@ export class WorldManager {
     };
     this.state.npcs[id] = npc;
     this.state.entities[id] = npc;
+    
+    // Log personality for debugging
+    console.log(`Created NPC ${name} with personality: ${PersonalityGenerator.describe(npc.personality)} (${npc.personality.archetype})`);
   }
 
   public createResource(id: string, type: string, position: Vector2, amount: number, properties: any = { value: 1 }) {

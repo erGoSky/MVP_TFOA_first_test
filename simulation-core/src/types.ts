@@ -120,12 +120,41 @@ export interface Contract {
     createdAt: number;
 }
 
+// Personality System
+export interface PersonalityTraits {
+  greed: number;           // 0-1: Economic focus vs altruism
+  laziness: number;        // 0-1: Work avoidance tendency
+  sociability: number;     // 0-1: Social interaction preference
+  riskTolerance: number;   // 0-1: Willingness to take risks
+  planfulness: number;     // 0-1: Long-term vs short-term thinking
+  curiosity: number;       // 0-1: Exploration tendency
+}
+
+export interface Personality {
+  traits: PersonalityTraits;
+  archetype: string;       // "merchant", "hermit", "builder", etc.
+}
+
+export enum NPCContextState {
+  DESPERATE = 'DESPERATE',    // Critical needs, low resources
+  STRUGGLING = 'STRUGGLING',  // One or more needs high
+  STABLE = 'STABLE',          // Balanced state
+  THRIVING = 'THRIVING'       // All needs met, surplus resources
+}
+
+export interface NPCContext {
+  state: NPCContextState;
+  urgentNeeds: string[];
+  opportunities: string[];
+}
+
 export interface NPC extends Entity {
   type: 'npc';
   name: string;
   needs: Needs;
   stats: Stats;
   skills: Skills;
+  personality: Personality;
   currentAction: string | null;
   actionState: ActionState;
   inventory: InventoryItem[];
