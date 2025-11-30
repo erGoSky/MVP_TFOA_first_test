@@ -32,6 +32,8 @@
     z-index: 10;
     max-height: calc(100vh - 120px);
     overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding-right: $spacing-xs; // Add a little padding for visual separation
   }
 
   .loading-screen, .error-screen {
