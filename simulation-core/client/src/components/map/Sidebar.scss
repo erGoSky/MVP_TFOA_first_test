@@ -23,17 +23,28 @@
       color: $text-light;
     }
 
-    .close-btn {
+    .header-controls {
+      display: flex;
+      gap: $spacing-sm;
+    }
+
+    .close-btn, .mode-btn {
       background: none;
       border: none;
       color: $text-light;
       font-size: 1.2em;
       cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
 
       &:hover {
-        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      &.active {
+        background: rgba($primary-color, 0.3);
+        color: $primary-color;
       }
     }
   }

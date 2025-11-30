@@ -1,0 +1,127 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.editor-panel {
+  padding: $spacing-sm;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-md;
+
+  h4 {
+    margin: 0 0 $spacing-sm 0;
+    color: $text-light;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .tool-buttons, .type-buttons {
+    display: flex;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+  }
+
+  .tool-btn, .type-btn {
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: $text-light;
+    transition: all 0.2s ease;
+    flex: 1;
+    padding: $spacing-sm;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid transparent;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    &.active {
+      background: rgba($primary-color, 0.3);
+      border-color: $primary-color;
+    }
+  }
+
+  .options-section {
+    margin-bottom: $spacing-md;
+    
+    label {
+      display: block;
+      margin-bottom: $spacing-xs;
+      color: $text-light;
+      font-size: 0.9em;
+    }
+
+    select {
+      width: 100%;
+      padding: $spacing-sm;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: $text-light;
+      border-radius: $border-radius-sm;
+      
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  .edit-section {
+    margin-top: $spacing-md;
+    padding-top: $spacing-md;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .json-editor {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: $text-light;
+        padding: $spacing-sm;
+        border-radius: $border-radius-sm;
+        font-family: monospace;
+        font-size: 0.85em;
+        resize: vertical;
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+
+      .error-msg {
+        color: $danger-color;
+        font-size: 0.85em;
+      }
+
+      .save-btn {
+        border: none;
+        border-radius: $border-radius-sm;
+        cursor: pointer;
+        padding: $spacing-sm;
+        background: rgba($success-color, 0.2);
+        color: lighten($success-color, 10%);
+        border: 1px solid rgba($success-color, 0.3);
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba($success-color, 0.3);
+        }
+      }
+    }
+  }
+
+  .instructions {
+    font-size: 0.85em;
+    color: rgba($text-light, 0.7);
+    font-style: italic;
+    text-align: center;
+    margin-top: $spacing-md;
+  }
+}

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { WorldState, Entity } from '../../types/world';
 import { PinnedCard } from './PinnedCard';
+import { EditorPanel } from '../editor/EditorPanel';
+import type { EditorState } from '../editor/EditorPanel';
 import { ENTITY_ICONS } from '../../utils/entityUtils';
 import './Sidebar.scss';
 
@@ -9,9 +11,28 @@ interface SidebarProps {
   pinnedEntities: Map<string, Entity>;
   onUnpin: (id: string) => void;
   onClose: () => void;
+  editorMode: boolean;
+  toggleEditorMode: () => void;
+  editorState: EditorState;
+  onEditorStateChange: (state: EditorState) => void;
+  selectedEntity?: Entity | null;
+  onUpdateEntity?: (id: string, updates: Partial<Entity>) => void;
+  onDeselect?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ worldState, pinnedEntities, onUnpin, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  worldState, 
+  pinnedEntities, 
+  onUnpin, 
+  onClose,
+  editorMode,
+  toggleEditorMode,
+  editorState,
+  onEditorStateChange,
+  selectedEntity,
+  onUpdateEntity,
+  onDeselect
+}) => {
   const [collapsed, setCollapsed] = useState({
     info: false,
     legend: false
@@ -30,11 +51,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ worldState, pinnedEntities, on
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h3>World Data</h3>
-        <button className="close-btn" onClick={onClose} title="Hide Sidebar">✕</button>
+        <h3>{editorMode ? 'World Editor' : 'World Data'}</h3>
+        <div className="header-controls">
+          <button 
+            className={`mode-btn ${editorMode ? 'active' : ''}`}
+            onClick={toggleEditorMode}
+            title={editorMode ? "Exit Editor Mode" : "Enter Editor Mode"}
+          >
+            {editorMode ? '📝' : '👁️'}
+          </button>
+          <button className="close-btn" onClick={onClose} title="Hide Sidebar">✕</button>
+        </div>
       </div>
 
-      <div className={`info-panel ${collapsed.info ? 'collapsed' : ''}`}>
+      {editorMode ? (
+        <EditorPanel 
+          editorState={editorState} 
+          onStateChange={onEditorStateChange}
+          selectedEntity={selectedEntity || null}
+          onUpdateEntity={onUpdateEntity || (() => {})}
+          onDeselect={onDeselect || (() => {})}
+        />
+      ) : (
+        <>
+          <div className={`info-panel ${collapsed.info ? 'collapsed' : ''}`}>
         <div className="info-title" onClick={() => toggleSection('info')}>
           <span>World Info</span>
           <span className="toggle-icon">{collapsed.info ? '▼' : '▲'}</span>
@@ -111,6 +151,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ worldState, pinnedEntities, on
           />
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 };

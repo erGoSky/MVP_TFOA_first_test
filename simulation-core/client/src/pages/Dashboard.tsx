@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { NPCGrid } from '../components/dashboard/NPCGrid';
 import { SaveLoadControls } from '../components/SaveLoadControls';
+import { WorldControls } from '../components/dashboard/WorldControls';
 import type { AppContextType } from '../components/layout/AppLayout';
 import './Dashboard.scss';
 
@@ -56,12 +57,21 @@ export const Dashboard: React.FC = () => {
           />
         </div>
       </div>
-      {worldState && (
-        <NPCGrid 
-          npcs={worldState.npcs} 
-          onNPCClick={(npc) => centerOnEntity({ ...npc, type: 'npc' })}
-        />
-      )}
+      
+      <div className="dashboard-content">
+        <div className="dashboard-sidebar">
+          <WorldControls />
+        </div>
+        
+        <div className="dashboard-main">
+          {worldState && (
+            <NPCGrid 
+              npcs={worldState.npcs} 
+              onNPCClick={(npc) => centerOnEntity({ ...npc, type: 'npc' })}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

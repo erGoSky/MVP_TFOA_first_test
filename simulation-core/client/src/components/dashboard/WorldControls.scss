@@ -1,0 +1,80 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.world-controls {
+  background: rgba(0, 0, 0, 0.3);
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-lg;
+  border: 1px solid rgba($text-light, 0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: $spacing-md;
+    color: $text-light;
+    font-size: 1.1em;
+    border-bottom: 1px solid rgba($text-light, 0.1);
+    padding-bottom: $spacing-xs;
+  }
+
+  .controls-group {
+    display: flex;
+    gap: $spacing-md;
+  }
+
+  .control-btn {
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: $text-light;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    flex: 1;
+    padding: $spacing-sm $spacing-md;
+    
+    &.generate-btn {
+      background: rgba($primary-color, 0.2);
+      border-color: $primary-color;
+      
+      &:hover:not(:disabled) {
+        background: rgba($primary-color, 0.4);
+      }
+    }
+    
+    &.reset-btn {
+      background: rgba($danger-color, 0.2);
+      border-color: $danger-color;
+      
+      &:hover:not(:disabled) {
+        background: rgba($danger-color, 0.4);
+      }
+    }
+  }
+
+  .message {
+    margin-top: $spacing-md;
+    padding: $spacing-sm;
+    border-radius: $border-radius-sm;
+    text-align: center;
+    font-size: 0.9em;
+    animation: fadeIn 0.3s ease;
+
+    &.success {
+      background: rgba($success-color, 0.2);
+      color: lighten($success-color, 10%);
+      border: 1px solid rgba($success-color, 0.3);
+    }
+
+    &.error {
+      background: rgba($danger-color, 0.2);
+      color: lighten($danger-color, 10%);
+      border: 1px solid rgba($danger-color, 0.3);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

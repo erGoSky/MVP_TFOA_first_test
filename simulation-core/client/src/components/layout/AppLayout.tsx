@@ -14,12 +14,15 @@ export type AppContextType = {
   error: Error | null;
   hoveredEntities: Entity[];
   hoverIndex: number;
-  mousePos: { x: number; y: number };
+  mousePos: { x: number; y: number } | null;
   handleHover: (entities: Entity[], x: number, y: number) => void;
-  cycleHover: () => void;
+  cycleHover: (direction: number) => void;
   centerOnEntity: (entity: Entity) => void;
   sidebarVisible: boolean;
   toggleSidebar: () => void;
+  editorMode: boolean;
+  toggleEditorMode: () => void;
+  screenToWorld: (x: number, y: number) => { x: number; y: number };
 };
 
 export const AppLayout: React.FC = () => {
@@ -44,9 +47,21 @@ export const AppLayout: React.FC = () => {
     }));
   };
 
+  const screenToWorld = (screenX: number, screenY: number) => {
+    const TILE_SIZE = 32;
+    // (screen - offset) / scale / tile_size
+    const worldX = Math.floor((screenX - transform.offset.x) / transform.scale / TILE_SIZE);
+    const worldY = Math.floor((screenY - transform.offset.y) / transform.scale / TILE_SIZE);
+    return { x: worldX, y: worldY };
+  };
+
   // Sidebar visibility state
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const toggleSidebar = () => setSidebarVisible(prev => !prev);
+
+  // Editor mode state
+  const [editorMode, setEditorMode] = useState(false);
+  const toggleEditorMode = () => setEditorMode(prev => !prev);
 
   const contextValue: AppContextType = {
     worldState,
@@ -59,7 +74,10 @@ export const AppLayout: React.FC = () => {
     cycleHover,
     centerOnEntity,
     sidebarVisible,
-    toggleSidebar
+    toggleSidebar,
+    editorMode,
+    toggleEditorMode,
+    screenToWorld
   };
 
   return (

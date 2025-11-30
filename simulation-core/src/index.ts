@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import { WorldManager } from './world';
-import { initializeTestWorld } from './world-initializer';
+import { WorldGenerator } from './world-generator';
 
 dotenv.config();
 
@@ -11,7 +11,9 @@ const port = process.env.PORT || 3000;
 const world = new WorldManager();
 
 // Initialize the world
-initializeTestWorld(world);
+// Initialize the world
+const generator = new WorldGenerator(world);
+generator.generate();
 
 // Simulation control state
 let simulationPaused = false;
@@ -118,6 +120,67 @@ app.delete('/save/:filename', async (req, res) => {
     const { filename } = req.params;
     await world.deleteSave(filename);
     res.json({ success: true, message: `Save ${filename} deleted` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// World Management Endpoints
+app.post('/world/generate', (req, res) => {
+  try {
+    const params = req.body;
+    generator.generate(params);
+    res.json({ success: true, message: 'World generated' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/world/reset', (req, res) => {
+  try {
+    world.reset();
+    res.json({ success: true, message: 'World reset' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/entity', (req, res) => {
+  try {
+    const { type, ...data } = req.body;
+    
+    if (type === 'npc') {
+      world.createNPC(data.id, data.name, data.position, data.skills);
+    } else if (type === 'resource') {
+      world.createResource(data.id, data.resourceType, data.position, data.amount, data.properties);
+    } else if (type === 'building') {
+      world.createBuilding(data.id, data.buildingType, data.position);
+    } else {
+      return res.status(400).json({ error: 'Invalid entity type' });
+    }
+    
+    res.json({ success: true, message: 'Entity created' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/entity/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    world.removeEntity(id);
+    res.json({ success: true, message: `Entity ${id} removed` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/entity/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    world.updateEntity(id, updates);
+    res.json({ success: true, message: `Entity ${id} updated` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

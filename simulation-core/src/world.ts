@@ -520,4 +520,47 @@ export class WorldManager {
     await fs.unlink(filepath);
     console.log(`Save file deleted: ${filepath}`);
   }
+
+  // World Management
+  public reset(): void {
+    this.state = {
+      tick: 0,
+      time: 0,
+      entities: {},
+      npcs: {},
+      resources: {},
+      buildings: {},
+      contracts: {}
+    };
+    console.log('World reset');
+  }
+
+  public removeEntity(id: string): void {
+    const entity = this.state.entities[id];
+    if (!entity) return;
+
+    // Remove from specific collection
+    if (entity.type === 'npc') delete this.state.npcs[id];
+    else if (entity.type === 'resource') delete this.state.resources[id];
+    else if (entity.type === 'building') delete this.state.buildings[id];
+
+    // Remove from main entities map
+    delete this.state.entities[id];
+    console.log(`Entity removed: ${id}`);
+  }
+
+  public updateEntity(id: string, updates: Partial<any>): void {
+    const entity = this.state.entities[id];
+    if (!entity) return;
+
+    // Update properties
+    Object.assign(entity, updates);
+    
+    // Also update in specific collection
+    if (entity.type === 'npc') Object.assign(this.state.npcs[id], updates);
+    else if (entity.type === 'resource') Object.assign(this.state.resources[id], updates);
+    else if (entity.type === 'building') Object.assign(this.state.buildings[id], updates);
+    
+    console.log(`Entity updated: ${id}`);
+  }
 }

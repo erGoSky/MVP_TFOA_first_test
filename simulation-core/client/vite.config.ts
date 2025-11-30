@@ -11,7 +11,9 @@ export default defineConfig({
       '/simulation': 'http://localhost:3000',
       '/save': 'http://localhost:3000',
       '/load': 'http://localhost:3000',
-      '/saves': 'http://localhost:3000'
+      '/saves': 'http://localhost:3000',
+      '/world': 'http://localhost:3000',
+      '/entity': 'http://localhost:3000'
     }
   }
 })

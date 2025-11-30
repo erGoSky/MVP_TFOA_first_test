@@ -1,15 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Sidebar } from '../components/map/Sidebar';
+import type { EditorState } from '../components/editor/EditorPanel';
 import type { Entity } from '../types/world';
 import type { AppContextType } from '../components/layout/AppLayout';
 import './MapViewer.scss';
 
 export const MapViewer: React.FC = () => {
-  const { worldState, loading, error, hoveredEntities, hoverIndex, sidebarVisible, toggleSidebar } = useOutletContext<AppContextType>();
+  const { 
+    worldState, 
+    loading, 
+    error, 
+    hoveredEntities, 
+    hoverIndex, 
+    sidebarVisible, 
+    toggleSidebar,
+    editorMode,
+    toggleEditorMode,
+    screenToWorld
+  } = useOutletContext<AppContextType>();
   
   // Local state for pinned entities
   const [pinnedEntities, setPinnedEntities] = useState<Map<string, Entity>>(new Map());
+
+  // Editor state
+  const [editorState, setEditorState] = useState<EditorState>({
+    tool: 'select',
+    selectedType: 'npc',
+    resourceType: 'oak_tree',
+    buildingType: 'house_small'
+  });
+
+  // Editor selection
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
 
   // Update pinned entities when world state changes
   useEffect(() => {
@@ -60,19 +83,72 @@ export const MapViewer: React.FC = () => {
   // Let's add a global click handler effect here that listens to the window/document
   // and checks if we are hovering something.
   useEffect(() => {
-    const handleClick = () => {
-      if (hoveredEntities.length > 0) {
-        handleEntityClick(hoveredEntities[hoverIndex]);
+    const handleClick = async (e: MouseEvent) => {
+      // Ignore clicks on UI elements
+      if ((e.target as HTMLElement).closest('.sidebar') || 
+          (e.target as HTMLElement).closest('.save-load-container')) {
+        return;
+      }
+
+      if (editorMode) {
+        const worldPos = screenToWorld(e.clientX, e.clientY);
+
+        if (editorState.tool === 'place') {
+          const id = `${editorState.selectedType}_${Date.now()}`;
+          let body: any = {
+            type: editorState.selectedType,
+            id,
+            position: worldPos
+          };
+
+          if (editorState.selectedType === 'npc') {
+            body.name = 'New NPC';
+            body.skills = { gathering: 10, crafting: 10, trading: 10 };
+          } else if (editorState.selectedType === 'resource') {
+            body.resourceType = editorState.resourceType;
+            body.amount = 10;
+            // Fetch props from map or defaults? For now simple defaults
+            body.properties = { value: 1 }; 
+          } else if (editorState.selectedType === 'building') {
+            body.buildingType = editorState.buildingType;
+          }
+
+          try {
+            await fetch('/entity', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
+          } catch (err) {
+            console.error('Failed to create entity:', err);
+          }
+        } else if (editorState.tool === 'delete') {
+          if (hoveredEntities.length > 0) {
+            const entity = hoveredEntities[hoverIndex];
+            try {
+              await fetch(`/entity/${entity.id}`, { method: 'DELETE' });
+            } catch (err) {
+              console.error('Failed to delete entity:', err);
+            }
+          }
+        } else if (editorState.tool === 'select') {
+          if (hoveredEntities.length > 0) {
+            setSelectedEntityId(hoveredEntities[hoverIndex].id);
+          } else {
+            setSelectedEntityId(null);
+          }
+        }
+      } else {
+        // Normal mode: Pin entities
+        if (hoveredEntities.length > 0) {
+          handleEntityClick(hoveredEntities[hoverIndex]);
+        }
       }
     };
 
-    // We only want this to happen when clicking the canvas, which is the background.
-    // But the canvas is in AppLayout. 
-    // A simple way is to listen to 'click' on window, but check if target is canvas?
-    // Or just listen to click.
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
-  }, [hoveredEntities, hoverIndex]);
+  }, [hoveredEntities, hoverIndex, editorMode, editorState, screenToWorld]);
 
 
   const handleUnpin = (id: string) => {
@@ -81,6 +157,30 @@ export const MapViewer: React.FC = () => {
       next.delete(id);
       return next;
     });
+  };
+
+  const handleUpdateEntity = async (id: string, updates: Partial<Entity>) => {
+    try {
+      await fetch(`/entity/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch (err) {
+      console.error('Failed to update entity:', err);
+    }
+  };
+
+  // Get selected entity object
+  let selectedEntity: Entity | null = null;
+  if (selectedEntityId && worldState) {
+    if (worldState.npcs[selectedEntityId]) selectedEntity = { ...worldState.npcs[selectedEntityId], type: 'npc' };
+    else if (worldState.resources[selectedEntityId]) selectedEntity = { ...worldState.resources[selectedEntityId], type: 'resource' };
+    else if (worldState.buildings[selectedEntityId]) selectedEntity = { ...worldState.buildings[selectedEntityId], type: 'building' };
+  }
+
+  const handleDeselect = () => {
+    setSelectedEntityId(null);
   };
 
   if (loading && !worldState) {
@@ -99,6 +199,13 @@ export const MapViewer: React.FC = () => {
           pinnedEntities={pinnedEntities}
           onUnpin={handleUnpin}
           onClose={toggleSidebar}
+          editorMode={editorMode}
+          toggleEditorMode={toggleEditorMode}
+          editorState={editorState}
+          onEditorStateChange={setEditorState}
+          selectedEntity={selectedEntity}
+          onUpdateEntity={handleUpdateEntity}
+          onDeselect={handleDeselect}
         />
       )}
     </div>

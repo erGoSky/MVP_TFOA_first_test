@@ -26,9 +26,25 @@
     }
   }
 
+  .dashboard-content {
+    display: flex;
+    gap: 20px;
+    padding: 0 20px;
+    pointer-events: none;
+
+    .dashboard-sidebar {
+      width: 300px;
+      pointer-events: auto;
+    }
+
+    .dashboard-main {
+      flex: 1;
+      pointer-events: auto;
+    }
+  }
+
   // Re-enable pointer events for grid
   .npc-grid {
     pointer-events: auto;
-    padding: 0 20px;
   }
 }
