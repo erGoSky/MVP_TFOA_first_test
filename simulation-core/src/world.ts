@@ -136,7 +136,10 @@ export class WorldManager {
   }
 
   public updateNPC(npc: NPC) {
-      if (!npc.currentAction) return;
+      if (!npc.currentAction || npc.currentAction === 'idle') {
+        this.decideAction(npc);
+        return;
+      }
       const [actionType] = npc.currentAction.split(':');
       
       if (actionType === 'move') {
