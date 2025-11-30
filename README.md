@@ -75,7 +75,7 @@ The project is split into three core components:
 
 5.  **Setup AI Service:**
     ```bash
-    cd ../../ai-service
+    cd ../ai-service
     # Recommended: Create a virtual environment
     python -m venv .venv
     # Windows
@@ -107,7 +107,7 @@ python main.py
 
 **Terminal 3: Client**
 ```bash
-cd simulation-core/client
+cd client
 npm run dev
 ```
 *Client runs on `http://localhost:5173` (check console output)*
