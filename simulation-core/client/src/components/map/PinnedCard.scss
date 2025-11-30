@@ -1,3 +1,6 @@
 // PinnedCard styling is now handled by BaseEntityCard.scss
-// This file is kept for potential future wrapper-specific styles
+// This file contains wrapper-specific styles
 
+.pinned-card-wrapper {
+  backdrop-filter: blur(10px);
+}

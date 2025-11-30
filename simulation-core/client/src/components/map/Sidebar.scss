@@ -43,6 +43,7 @@
     padding: $spacing-md;
     border-radius: $border-radius-md;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 
     &.collapsed {
       padding-bottom: $spacing-sm;
