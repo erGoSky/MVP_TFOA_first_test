@@ -77,6 +77,52 @@ app.get('/simulation/status', (req, res) => {
   res.json({ paused: simulationPaused, speed: tickRateMultiplier });
 });
 
+// Save/Load endpoints
+app.post('/save', async (req, res) => {
+  try {
+    const { filename } = req.body;
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename is required' });
+    }
+    await world.saveState(filename);
+    res.json({ success: true, message: `World saved as ${filename}` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/load', async (req, res) => {
+  try {
+    const { filename } = req.body;
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename is required' });
+    }
+    await world.loadState(filename);
+    res.json({ success: true, message: `World loaded from ${filename}` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/saves', async (req, res) => {
+  try {
+    const saves = await world.getSavesList();
+    res.json({ saves });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/save/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    await world.deleteSave(filename);
+    res.json({ success: true, message: `Save ${filename} deleted` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });

@@ -1,0 +1,276 @@
+.save-load-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  .control-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.3s;
+
+    &.save-btn {
+      background: rgba(76, 175, 80, 0.8);
+      color: white;
+
+      &:hover {
+        background: rgb(76, 175, 80);
+        transform: translateY(-2px);
+      }
+    }
+
+    &.load-btn {
+      background: rgba(33, 150, 243, 0.8);
+      color: white;
+
+      &:hover {
+        background: rgb(33, 150, 243);
+        transform: translateY(-2px);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .message {
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    animation: slideIn 0.3s ease-out;
+
+    &.success {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+      border: 1px solid #4CAF50;
+    }
+
+    &.error {
+      background: rgba(244, 67, 54, 0.2);
+      color: #F44336;
+      border: 1px solid #F44336;
+    }
+  }
+
+  .dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .dialog {
+    background: rgba(30, 60, 114, 0.98);
+    border: 2px solid #4ecdc4;
+    border-radius: 10px;
+    min-width: 400px;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease-out;
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      h3 {
+        margin: 0;
+        color: #4ecdc4;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          color: #F44336;
+        }
+      }
+    }
+
+    .dialog-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1em;
+        margin-bottom: 15px;
+
+        &:focus {
+          outline: none;
+          border-color: #4ecdc4;
+        }
+      }
+
+      .existing-saves, .save-list {
+        h4 {
+          margin: 15px 0 10px 0;
+          color: #4ecdc4;
+          font-size: 0.9em;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+
+          li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            margin-bottom: 5px;
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.1);
+            }
+          }
+        }
+
+        .save-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 2px solid transparent;
+          border-radius: 5px;
+          margin-bottom: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          &.selected {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: #4ecdc4;
+          }
+        }
+
+        .delete-btn {
+          background: rgba(244, 67, 54, 0.3);
+          border: none;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 0.9em;
+
+          &:hover {
+            background: rgba(244, 67, 54, 0.6);
+          }
+        }
+
+        .no-saves {
+          color: rgba(255, 255, 255, 0.5);
+          text-align: center;
+          padding: 20px;
+        }
+      }
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 10px;
+      padding: 15px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      justify-content: flex-end;
+
+      button {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+
+        &:not(.primary) {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+
+          &:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+          }
+        }
+
+        &.primary {
+          background: #4ecdc4;
+          color: #1a1a2e;
+
+          &:hover:not(:disabled) {
+            background: #5eddd4;
+          }
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

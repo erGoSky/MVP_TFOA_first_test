@@ -432,4 +432,65 @@ export class WorldManager {
     this.state.time++;
     Object.values(this.state.npcs).forEach(npc => this.updateNPC(npc));
   }
+
+  // Save/Load functionality
+  public async saveState(filename: string): Promise<void> {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    const savesDir = path.join(process.cwd(), 'saves');
+    
+    // Create saves directory if it doesn't exist
+    try {
+      await fs.mkdir(savesDir, { recursive: true });
+    } catch (error) {
+      console.error('Error creating saves directory:', error);
+    }
+    
+    const filepath = path.join(savesDir, `${filename}.json`);
+    const stateJson = JSON.stringify(this.state, null, 2);
+    
+    await fs.writeFile(filepath, stateJson, 'utf-8');
+    console.log(`World state saved to ${filepath}`);
+  }
+
+  public async loadState(filename: string): Promise<void> {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    const savesDir = path.join(process.cwd(), 'saves');
+    const filepath = path.join(savesDir, `${filename}.json`);
+    
+    const stateJson = await fs.readFile(filepath, 'utf-8');
+    this.state = JSON.parse(stateJson);
+    console.log(`World state loaded from ${filepath}`);
+  }
+
+  public async getSavesList(): Promise<string[]> {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    const savesDir = path.join(process.cwd(), 'saves');
+    
+    try {
+      const files = await fs.readdir(savesDir);
+      return files
+        .filter(f => f.endsWith('.json'))
+        .map(f => f.replace('.json', ''));
+    } catch (error) {
+      // Directory doesn't exist yet
+      return [];
+    }
+  }
+
+  public async deleteSave(filename: string): Promise<void> {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    const savesDir = path.join(process.cwd(), 'saves');
+    const filepath = path.join(savesDir, `${filename}.json`);
+    
+    await fs.unlink(filepath);
+    console.log(`Save file deleted: ${filepath}`);
+  }
 }
