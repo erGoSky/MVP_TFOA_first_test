@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Sidebar } from '../components/map/Sidebar';
-import { SaveLoadControls } from '../components/SaveLoadControls';
 import type { Entity } from '../types/world';
 import type { AppContextType } from '../components/layout/AppLayout';
 import './MapViewer.scss';
@@ -11,7 +10,6 @@ export const MapViewer: React.FC = () => {
   
   // Local state for pinned entities
   const [pinnedEntities, setPinnedEntities] = useState<Map<string, Entity>>(new Map());
-  const saveLoadRef = useRef<HTMLDivElement>(null);
 
   // Update pinned entities when world state changes
   useEffect(() => {
@@ -61,26 +59,6 @@ export const MapViewer: React.FC = () => {
   
   // Let's add a global click handler effect here that listens to the window/document
   // and checks if we are hovering something.
-  // Keyboard shortcuts for save/load
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        // Trigger save dialog
-        const saveBtn = saveLoadRef.current?.querySelector('.save-btn') as HTMLButtonElement;
-        saveBtn?.click();
-      } else if (e.ctrlKey && e.key === 'l') {
-        e.preventDefault();
-        // Trigger load dialog
-        const loadBtn = saveLoadRef.current?.querySelector('.load-btn') as HTMLButtonElement;
-        loadBtn?.click();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   useEffect(() => {
     const handleClick = () => {
       if (hoveredEntities.length > 0) {
@@ -115,12 +93,6 @@ export const MapViewer: React.FC = () => {
 
   return (
     <div className="map-viewer-page">
-      <div className="save-load-container" ref={saveLoadRef}>
-        <SaveLoadControls 
-          onSave={() => console.log('World saved')}
-          onLoad={() => window.location.reload()} // Refresh to load new state
-        />
-      </div>
       {sidebarVisible && (
         <Sidebar 
           worldState={worldState}

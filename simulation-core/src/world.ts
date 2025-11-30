@@ -448,7 +448,14 @@ export class WorldManager {
     }
     
     const filepath = path.join(savesDir, `${filename}.json`);
-    const stateJson = JSON.stringify(this.state, null, 2);
+    
+    // Create a copy of state without the redundant entities map to avoid duplication
+    const stateToSave = {
+      ...this.state,
+      entities: {} 
+    };
+    
+    const stateJson = JSON.stringify(stateToSave, null, 2);
     
     await fs.writeFile(filepath, stateJson, 'utf-8');
     console.log(`World state saved to ${filepath}`);
@@ -462,7 +469,27 @@ export class WorldManager {
     const filepath = path.join(savesDir, `${filename}.json`);
     
     const stateJson = await fs.readFile(filepath, 'utf-8');
-    this.state = JSON.parse(stateJson);
+    const loadedState = JSON.parse(stateJson);
+    
+    // Reconstruct the entities map from the specific collections
+    loadedState.entities = {};
+    
+    // Add NPCs
+    Object.values(loadedState.npcs).forEach((npc: any) => {
+      loadedState.entities[npc.id] = npc;
+    });
+    
+    // Add Resources
+    Object.values(loadedState.resources).forEach((res: any) => {
+      loadedState.entities[res.id] = res;
+    });
+    
+    // Add Buildings
+    Object.values(loadedState.buildings).forEach((b: any) => {
+      loadedState.entities[b.id] = b;
+    });
+    
+    this.state = loadedState;
     console.log(`World state loaded from ${filepath}`);
   }
 

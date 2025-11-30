@@ -8,7 +8,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/state': 'http://localhost:3000',
-      '/simulation': 'http://localhost:3000'
+      '/simulation': 'http://localhost:3000',
+      '/save': 'http://localhost:3000',
+      '/load': 'http://localhost:3000',
+      '/saves': 'http://localhost:3000'
     }
   }
 })

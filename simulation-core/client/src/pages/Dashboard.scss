@@ -7,8 +7,28 @@
   height: 100%;
   pointer-events: none; // Allow clicks to pass through to map
 
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+
+    h1 {
+      margin: 0;
+      color: $text-light;
+      font-size: 1.8em;
+    }
+
+    .save-load-container {
+      pointer-events: auto; // Enable clicks on buttons
+    }
+  }
+
   // Re-enable pointer events for grid
   .npc-grid {
     pointer-events: auto;
+    padding: 0 20px;
   }
 }

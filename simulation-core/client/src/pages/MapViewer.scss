@@ -36,13 +36,6 @@
     padding-right: $spacing-xs; // Add a little padding for visual separation
   }
 
-  .save-load-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 100;
-  }
-
   .loading-screen, .error-screen {
     @include flex-center;
     height: 100vh;

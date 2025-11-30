@@ -88,3 +88,6 @@ coverage/
 # Misc
 .cache/
 .parcel-cache/
+
+# Save files
+**/saves/
