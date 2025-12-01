@@ -8,17 +8,41 @@ interface EntityCardProps {
 }
 
 export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true }) => {
+  const getActionBadge = (action: string | null): { icon: string; label: string; color: string } => {
+    if (!action) return { icon: '💤', label: 'Idle', color: '#888' };
+    
+    const actionType = action.split(':')[0];
+    const badges: Record<string, { icon: string; label: string; color: string }> = {
+      'move': { icon: '🚶', label: 'Moving', color: '#4CAF50' },
+      'chop': { icon: '🪓', label: 'Chopping', color: '#8B4513' },
+      'mine': { icon: '⛏️', label: 'Mining', color: '#757575' },
+      'craft': { icon: '🔨', label: 'Crafting', color: '#FF9800' },
+      'sleep': { icon: '😴', label: 'Sleeping', color: '#3F51B5' },
+      'eat': { icon: '🍖', label: 'Eating', color: '#E91E63' },
+      'work': { icon: '💼', label: 'Working', color: '#009688' },
+      'sell': { icon: '💰', label: 'Selling', color: '#FFC107' },
+      'buy': { icon: '🛒', label: 'Buying', color: '#2196F3' },
+    };
+    
+    return badges[actionType] || { icon: '❓', label: action, color: '#888' };
+  };
+
   const renderNPC = (npc: NPC) => {
     const hunger = (1 - npc.needs.hunger) * 100;
     const energy = npc.needs.energy * 100;
     const health = npc.stats.health;
+    const badge = getActionBadge(npc.currentAction);
 
     return (
       <>
         {showTitle && <div className="card-header-title">👤 {npc.name}</div>}
         <div className="card-section">
           <div className="card-label">Current Action:</div>
-          <div className="card-value">{npc.currentAction || 'idle'}</div>
+          <div className="card-value">
+            <span className="status-badge" style={{ backgroundColor: badge.color }}>
+              {badge.icon} {badge.label}
+            </span>
+          </div>
         </div>
         <div className="card-section">
           <div className="card-label">🍖 Hunger: {hunger.toFixed(0)}%</div>
