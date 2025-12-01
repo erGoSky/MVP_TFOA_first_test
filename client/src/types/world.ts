@@ -95,6 +95,7 @@ export interface WorldState {
   width: number;
   height: number;
   tiles: Tile[][];
+  entities: Record<string, Entity>;
   npcs: Record<string, NPC>;
   resources: Record<string, Resource>;
   buildings: Record<string, Building>;

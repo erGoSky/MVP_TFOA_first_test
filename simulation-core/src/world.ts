@@ -12,6 +12,9 @@ import { CraftingHandler } from './actions/handlers/crafting.handler';
 import { TradingHandler } from './actions/handlers/trading.handler';
 import { HandActions } from './actions/hand-actions';
 import { IdleHandler } from './actions/handlers/idle.handler';
+import { ChangeTracker } from './state/ChangeTracker';
+import { SnapshotManager } from './state/SnapshotManager';
+import { SNAPSHOT_CONFIG } from './config/snapshot.config';
 
 const AI_SERVICE_URL = 'http://localhost:8000';
 
@@ -21,10 +24,15 @@ export class WorldManager {
   private state: WorldState;
   private actionManager: ActionManager;
   private memorySystem: MemorySystem;
+  private changeTracker: ChangeTracker;
+  public snapshotManager: SnapshotManager;
+  public onSnapshotSaved: ((snapshot: any) => void) | null = null;
 
   constructor() {
     this.actionManager = new ActionManager();
     this.memorySystem = new MemorySystem();
+    this.changeTracker = new ChangeTracker();
+    this.snapshotManager = new SnapshotManager();
     
     // ... handlers ...
     const moveHandler = new MoveHandler();
@@ -120,6 +128,8 @@ export class WorldManager {
     this.state.npcs[id] = npc;
     this.state.entities[id] = npc;
     
+    this.changeTracker.trackCreate(id, 'npc', npc);
+
     // Log personality for debugging
     console.log(`Created NPC ${name} with personality: ${PersonalityGenerator.describe(npc.personality)} (${npc.personality.archetype})`);
   }
@@ -136,6 +146,8 @@ export class WorldManager {
     };
     this.state.resources[id] = res;
     this.state.entities[id] = res;
+    
+    this.changeTracker.trackCreate(id, 'resource', res);
   }
 
   public createContainer(id: string, type: string, position: Vector2, capacity: number = 10) {
@@ -168,6 +180,9 @@ export class WorldManager {
     };
     
     this.state.buildings[id] = building;
+    this.state.entities[id] = building; // Add to entities map too
+    
+    this.changeTracker.trackCreate(id, 'building', building);
   }
 
   public createBuilding(id: string, type: string, position: Vector2) {
@@ -181,6 +196,8 @@ export class WorldManager {
     };
     this.state.buildings[id] = building;
     this.state.entities[id] = building;
+    
+    this.changeTracker.trackCreate(id, 'building', building);
   }
 
   public updateNPC(npc: NPC) {
@@ -531,6 +548,10 @@ export class WorldManager {
     
     // Update NPC memory and actions
     Object.values(this.state.npcs).forEach(npc => {
+        // Clone for diffing
+        // Note: Maps (memory) will be lost in JSON clone, but we don't track memory changes for client
+        const oldNpc = JSON.parse(JSON.stringify(npc));
+
         // Update memory based on visible entities (simple radius check for now)
         const visibleEntities = Object.values(this.state.entities).filter(e => 
             this.getDistance(npc.position, e.position) <= 10 // Visual range
@@ -538,7 +559,54 @@ export class WorldManager {
         this.memorySystem.updateMemory(npc, visibleEntities, this.state.tick);
         
         this.updateNPC(npc);
+
+        // Track changes
+        this.diffAndTrack(npc.id, oldNpc, npc);
     });
+
+    // Save snapshot if there are changes
+    if (this.changeTracker.hasChanges()) {
+        this.snapshotManager.saveSnapshot(
+            SNAPSHOT_CONFIG.WORLD_ID,
+            this.state.tick,
+            this.changeTracker.getFullCast(),
+            this.changeTracker.getLimitedCast()
+        );
+        
+        // Periodic full state archive
+        if (this.snapshotManager.shouldArchive(this.state.tick)) {
+            this.snapshotManager.saveFullState(SNAPSHOT_CONFIG.WORLD_ID, this.state);
+        }
+
+        // Notify listeners (SSE)
+        if (this.onSnapshotSaved) {
+            this.onSnapshotSaved({
+                tick: this.state.tick,
+                changes: this.changeTracker.getLimitedCast()
+            });
+        }
+
+        this.changeTracker.clear();
+    }
+  }
+
+  // Snapshot accessors
+  public async getLatestSnapshot(worldId: string) {
+      const tick = await this.snapshotManager.getLatestTick(worldId);
+      return await this.snapshotManager.getSnapshot(worldId, tick);
+  }
+
+  public async getSnapshotRange(worldId: string, from: number, to: number) {
+      return await this.snapshotManager.getSnapshotRange(worldId, from, to);
+  }
+
+  private diffAndTrack(id: string, oldEntity: any, newEntity: any) {
+      // Track specific fields that are relevant for the client
+      const fields = ['position', 'needs', 'stats', 'skills', 'currentAction', 'actionState', 'inventory', 'hands', 'ownedBuildingIds'];
+      
+      fields.forEach(field => {
+          this.changeTracker.trackFieldChange(id, field, oldEntity[field], newEntity[field]);
+      });
   }
 
   // Save/Load functionality

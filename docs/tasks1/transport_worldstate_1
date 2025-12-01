@@ -1,0 +1,75 @@
+1. Snapshot Granularity:
+-Should each snapshot contain ALL changes from a single tick, or can we batch multiple ticks?
+-ALL changes from a single tick.
+
+-What level of detail?
+- You need to make two casts, one full and one limited, containing information about the change in the state of the world, that is, what is visible in the cut, for example: a resource was removed from the world, a new building was placed in the world, an NPC moved around the world.
+
+2. Change Tracking:
+-Should we track field-level changes (e.g., npc.position.x changed) or entity-level (e.g., npc changed)?
+-we should track field-level changes.
+
+-Do we need to track deletions separately from updates?
+-not separately.
+
+3. Redis Schema:
+-Key structure: snapshot:{tick} or snapshot:{worldId}:{tick}?
+-snapshot:{worldId}:{tick}.
+
+-Retention policy: Keep last N snapshots? Time-based (e.g., last hour)
+-Time-based 10 minute(can be configured)
+
+-Should we store full state periodically for recovery?
+-Yes, the state must be saved and archived periodically.
+
+4. Client Behavior:
+-If client misses snapshots (e.g., offline), should it request full state or replay all missed snapshots?
+-Request full state.
+
+-How should we handle conflicts if client state diverges?
+-Request full state.
+
+5. Current System:
+-Currently using SSE (/events) for updates. Should we keep this or replace entirely with snapshot polling?
+-to implement a Hybrid State Synchronization Model that leverages the current SSE for near real-time updates while primarily relying on the Redis-backed snapshot system for reliable state initialization and catching up. This approach addresses the need for decoupling, detailed field-level changes, and reliable recovery, while maintaining low-latency updates.
+
+🚀 Recommended Solution: Hybrid State Synchronization
+The system should combine two distinct channels to handle the requirements:
+1. Snapshot Channel (for Reliability & Recovery)
+This channel handles the full state and reliable, historical change snapshots stored in Redis.Initialization/Recovery: The client first fetches the Full World State (archived state) and the Latest Change Snapshot (using snapshot{worldId}:{current tick} key).
+Catch-up: If the client falls behind or misses updates, it is instructed to Request Full State for immediate synchronization.
+Redis Implementation:
+Key Structure: snapshot{worldId}:{current tick}
+Data Format (Snapshot Content): The value should be a structured format (like JSON or Protobuf) containing the two required change casts (Full Cast and Limited Cast) for that specific tick.
+Retention: Set an Expire Time (TTL) of 10 minutes (or configured value) on the snapshot keys in Redis.
+2. Real-time Channel (for Low Latency Updates)
+This channel uses Server-Sent Events (SSE) to deliver the latest, highest-priority changes in real-time.
+Action on New Snapshot: After the kernel saves the snapshot{worldId}:{current tick} to Redis, it should immediately trigger an SSE push to connected clients.
+SSE Content: The SSE message should contain the Limited Cast information from the newly saved snapshot, along with the corresponding tick number.
+Decision: Keep and Optimize SSE. Do not replace SSE entirely with polling. Polling for real-time updates is inefficient (high latency, high load) compared to SSE. SSE is ideal for pushing the single, latest snapshot's limited changes.
+
+🛠️ Implementation Details & Rationale
+1. Snapshot Granularity and Content
+
+Granularity
+ALL changes from a single tick.
+This is a well-defined atomic unit of change for the system, making snapshotting and replay deterministic and consistent.
+
+Level of Detail
+Two Casts (Full & Limited)
+Allows clients to process necessary limited information quickly via SSE, but ensures the full 
+scope of changes is available in Redis for integrity checks or debugging.
+
+2. Change Tracking
+Field-Level Changes: Tracking field-level changes (e.g., npc.position.x changed from 10 to 11) is the correct approach for minimal bandwidth usage and precise, granular updates. This allows the client to apply changes without overwriting other, potentially missed field data on the same entity.
+Tracking Deletions: Since deletions are not tracked separately, they must be explicitly represented within the change snapshot data structure (e.g., an entity_status field changing to DELETED or a dedicated DELETIONS list containing entity IDs).
+3. Redis Schema
+Key Structure: snapshot{worldId}:{tick}. This is correct for sharding and partitioning by world/game instance and allowing easy retrieval of specific ticks.
+Retention Policy (TTL): Using a Time-based retention (10 minutes) with Redis's TTL is highly efficient and self-managing, avoiding manual cleanup tasks.
+Full State Archiving:
+The Full State must be saved and archived periodically to a permanent store (e.g., S3, dedicated database).
+A separate, dedicated Redis key (e.g., {full_state}:{worldId}), updated after each periodic archive, should hold a reference or copy of this full state for the client's initial fetch.
+4. Client Behavior
+Missing Snapshots/Conflict Resolution: Request Full State. This is the most robust and simplest approach. Replaying potentially hundreds or thousands of missed field-level snapshots is computationally intensive for the client and prone to re-ordering/dependency errors. Requesting the full state guarantees a correct, synchronized start/restart with minimal client-side complexity.
+
+update the plan based on the above

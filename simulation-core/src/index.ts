@@ -4,6 +4,8 @@ import path from 'path';
 import { WorldManager } from './world';
 import { WorldGenerator } from './world-generator';
 import { RESOURCE_TYPES, RESOURCE_METADATA, BIOME_METADATA, CONTAINER_TYPES, WORKSTATION_TYPES, WORKSTATION_METADATA } from './constants/entities';
+import { redisClient } from './redis/RedisClient';
+import { SNAPSHOT_CONFIG } from './config/snapshot.config';
 
 dotenv.config();
 
@@ -36,7 +38,25 @@ function startSimulation() {
 }
 
 // Start the simulation loop
+// Start the simulation loop
 startSimulation();
+
+// Connect to Redis
+(async () => {
+    try {
+        await redisClient.connect();
+        console.log('Connected to Redis');
+    } catch (err) {
+        console.error('Redis connection failed:', err);
+    }
+})();
+
+// SSE Clients
+const sseClients: ((data: any) => void)[] = [];
+
+world.onSnapshotSaved = (snapshot) => {
+    sseClients.forEach(client => client(snapshot));
+};
 
 app.use(express.json());
 // Use path.join to correctly resolve the public directory
@@ -63,6 +83,64 @@ app.get('/meta/entities', (req, res) => {
     workstationTypes: WORKSTATION_TYPES,
     workstationMetadata: WORKSTATION_METADATA,
   });
+});
+
+// Phase 4: State Synchronization Endpoints
+
+app.get('/world/init', async (req, res) => {
+    try {
+        // Try to get archived full state, fallback to current memory state
+        const fullState = await world.snapshotManager.getFullState(SNAPSHOT_CONFIG.WORLD_ID) || world.getState();
+        const latestSnapshot = await world.getLatestSnapshot(SNAPSHOT_CONFIG.WORLD_ID);
+        
+        res.json({
+            fullState,
+            currentTick: world.getState().tick,
+            latestSnapshot
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/world/snapshots', async (req, res) => {
+    try {
+        const from = parseInt(req.query.from as string);
+        const to = parseInt(req.query.to as string);
+        
+        if (isNaN(from) || isNaN(to)) {
+            return res.status(400).json({ error: 'Invalid range' });
+        }
+        
+        const snapshots = await world.getSnapshotRange(SNAPSHOT_CONFIG.WORLD_ID, from, to);
+        res.json({ snapshots });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/events', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const client = (snapshot: any) => {
+        res.write(`data: ${JSON.stringify({
+            type: 'snapshot',
+            tick: snapshot.tick,
+            changes: snapshot.changes
+        })}\n\n`);
+    };
+    
+    sseClients.push(client);
+    
+    req.on('close', () => {
+        const index = sseClients.indexOf(client);
+        if (index !== -1) {
+            sseClients.splice(index, 1);
+        }
+    });
 });
 
 // Simulation control endpoints
