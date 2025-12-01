@@ -14,6 +14,10 @@ export class MoveHandler implements ActionHandler {
             targetPos = state.resources[targetId].position;
         } else if (state.buildings[targetId]) {
             targetPos = state.buildings[targetId].position;
+        } else if (npc.memory && npc.memory.locations.has(targetId)) {
+            // Check memory
+            const mem = npc.memory.locations.get(targetId);
+            if (mem) targetPos = mem.position;
         }
 
         const dx = targetPos.x - npc.position.x;

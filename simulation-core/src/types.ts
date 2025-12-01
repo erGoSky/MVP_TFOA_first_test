@@ -163,6 +163,21 @@ export interface NPCContext {
   opportunities: string[];
 }
 
+// Memory System
+export interface MemoryItem {
+  id: string;
+  type: 'resource' | 'building' | 'container';
+  subtype: string; // e.g., 'tree_oak', 'tavern'
+  position: Vector2;
+  timestamp: number; // When this memory was formed/updated
+  value?: any; // Optional extra data (e.g., amount remaining)
+}
+
+export interface NPCMemory {
+  locations: Map<string, MemoryItem>; // Keyed by entity ID
+  lastSeen: Map<string, number>; // Keyed by subtype (e.g., 'tree_oak' -> timestamp)
+}
+
 export interface NPC extends Entity {
   type: 'npc';
   name: string;
@@ -176,6 +191,7 @@ export interface NPC extends Entity {
   hands: InventoryItem | null; // Item held in hands
   contracts?: Contract[];
   ownedBuildingIds: string[]; // List of owned buildings
+  memory: NPCMemory;
 }
 
 export interface Building extends Entity {

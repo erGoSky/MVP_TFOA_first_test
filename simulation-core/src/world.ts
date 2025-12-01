@@ -15,13 +15,18 @@ import { IdleHandler } from './actions/handlers/idle.handler';
 
 const AI_SERVICE_URL = 'http://localhost:8000';
 
+import { MemorySystem } from './ai/memory.system';
+
 export class WorldManager {
   private state: WorldState;
   private actionManager: ActionManager;
+  private memorySystem: MemorySystem;
 
   constructor() {
     this.actionManager = new ActionManager();
+    this.memorySystem = new MemorySystem();
     
+    // ... handlers ...
     const moveHandler = new MoveHandler();
     const pickupHandler = new PickupHandler();
     const resourceHandler = new ResourceHandler();
@@ -106,7 +111,11 @@ export class WorldManager {
       actionState: { inProgress: false, startTime: 0, duration: 0 },
       inventory: [],
       hands: null,
-      ownedBuildingIds: []
+      ownedBuildingIds: [],
+      memory: {
+          locations: new Map(),
+          lastSeen: new Map()
+      }
     };
     this.state.npcs[id] = npc;
     this.state.entities[id] = npc;
@@ -338,25 +347,67 @@ export class WorldManager {
 
   private getResourceOptions(npc: NPC) {
       const options: any[] = [];
+      let foundVisible = false;
+
+      // 1. Check visible resources
       Object.values(this.state.resources).forEach(res => {
           if (!res.harvested && res.amount > 0) {
               const dist = this.getDistance(npc.position, res.position);
-              if (dist <= 1.5) { // Interaction range
-                  options.push({
-                      name: `pickup:${res.id}`,
-                      type: 'pickup',
-                      params: { resource_type: res.resourceType, value: 0.5 }
-                  });
-              } else {
-                  // Move option
-                  options.push({
-                      name: `move:${res.id}`,
-                      type: 'move',
-                      params: { target: res.id, value: 0.4 }
-                  });
+              
+              // Only consider resources within visual range (10 tiles)
+              if (dist <= 10) {
+                  foundVisible = true;
+                  if (dist <= 1.5) { // Interaction range
+                      options.push({
+                          name: `pickup:${res.id}`,
+                          type: 'pickup',
+                          params: { resource_type: res.resourceType, value: 0.5 }
+                      });
+                  } else {
+                      // Move option
+                      options.push({
+                          name: `move:${res.id}`,
+                          type: 'move',
+                          params: { target: res.id, value: 0.4 }
+                      });
+                  }
               }
           }
       });
+
+      // 2. If no visible resources, check memory
+      if (!foundVisible && npc.memory) {
+          // Look for any resource in memory
+          // In a real system, we'd look for specific needs (e.g., "I need wood")
+          // For now, let's just go to the nearest known resource if we have nothing else to do
+          
+          // We can iterate over memory locations
+          npc.memory.locations.forEach((mem, id) => {
+              if (mem.type === 'resource') {
+                   // Check if we are already there (and it's gone, since we didn't see it above)
+                   const dist = this.getDistance(npc.position, mem.position);
+                   if (dist < 2) {
+                       // We are at the remembered location but didn't see it.
+                       // It must be gone. Forget it.
+                       this.memorySystem.forgetLocation(npc, id);
+                   } else {
+                       // Move to remembered location
+                       options.push({
+                           name: `move_mem:${id}`, // Special action name? Or just move to coords?
+                           // The MoveHandler expects a targetId. If the entity is gone, it might fail.
+                           // We should probably move to position.
+                           // But MoveHandler currently takes targetId.
+                           // Let's stick to targetId for now, but we might need to update MoveHandler to support coords.
+                           // Actually, if the entity is not in this.state.entities, MoveHandler might fail.
+                           
+                           // Let's check MoveHandler.
+                           // If I pass a targetId that doesn't exist, MoveHandler will fail.
+                           // So I need to verify if MoveHandler supports moving to coordinates.
+                       });
+                   }
+              }
+          });
+      }
       return options;
   }
 
@@ -477,7 +528,17 @@ export class WorldManager {
   public tick() {
     this.state.tick++;
     this.state.time++;
-    Object.values(this.state.npcs).forEach(npc => this.updateNPC(npc));
+    
+    // Update NPC memory and actions
+    Object.values(this.state.npcs).forEach(npc => {
+        // Update memory based on visible entities (simple radius check for now)
+        const visibleEntities = Object.values(this.state.entities).filter(e => 
+            this.getDistance(npc.position, e.position) <= 10 // Visual range
+        );
+        this.memorySystem.updateMemory(npc, visibleEntities, this.state.tick);
+        
+        this.updateNPC(npc);
+    });
   }
 
   // Save/Load functionality
