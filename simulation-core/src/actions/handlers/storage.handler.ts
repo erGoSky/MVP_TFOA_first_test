@@ -1,73 +1,88 @@
 import { ActionHandler } from '../action-manager';
-import { NPC, WorldState } from '../../types';
+import { NPC, Entity, Container, InventoryItem } from '../../types';
 import { WorldManager } from '../../world';
 
 export class StorageHandler implements ActionHandler {
     execute(npc: NPC, actionType: string, targetId: string, world: WorldManager): void {
         const state = world.getState();
+        // Target could be a building or a standalone entity with a container
+        let target: Entity | undefined = state.buildings[targetId] || state.entities[targetId];
+        
+        // If not found, check if it's a resource (unlikely to be a container, but for safety)
+        if (!target) target = state.resources[targetId];
 
-        if (actionType === 'store') {
-            const [containerId, itemType] = targetId.split('|');
-            const container = state.buildings[containerId];
-            
-            if (container && world.getDistance(npc.position, container.position) <= 1.5) {
-                // Find item in inventory or hands
-                let item = npc.inventory.find(i => i.type === itemType);
-                let source = 'inventory';
-                
-                if (!item && npc.hands?.type === itemType) {
-                    item = npc.hands;
-                    source = 'hands';
-                }
-                
-                if (item) {
-                    // Add to container
-                    const existing = container.inventory.find(i => i.type === itemType);
-                    if (existing) {
-                        existing.quantity += 1; // Store 1 at a time?
-                    } else {
-                        container.inventory.push({ id: `item_${Date.now()}`, type: itemType, quantity: 1 });
-                    }
-                    
-                    // Remove from source
-                    item.quantity -= 1;
-                    if (item.quantity <= 0) {
-                        if (source === 'inventory') {
-                            npc.inventory = npc.inventory.filter(i => i !== item);
-                        } else {
-                            npc.hands = null;
-                        }
-                    }
-                    console.log(`${npc.name} stored ${itemType} in ${container.buildingType}.`);
-                } else {
-                    console.log(`${npc.name} has no ${itemType} to store.`);
-                }
-            } else {
-                console.log(`${npc.name} cannot store (too far or missing container).`);
-            }
+        if (!target || !target.container) {
+            console.log(`${npc.name} failed to ${actionType}: Target ${targetId} is not a container.`);
             world.resetAction(npc);
+            return;
         }
-        else if (actionType === 'retrieve') {
-            const [containerId, itemType] = targetId.split('|');
-            const container = state.buildings[containerId];
-            
-            if (container && world.getDistance(npc.position, container.position) <= 1.5) {
-                const item = container.inventory.find(i => i.type === itemType);
-                if (item && item.quantity > 0) {
-                    // Add to NPC
-                    // Check logic (hands/inventory) - simplified: add to inventory
-                    world.addToInventory(npc, itemType, 1);
-                    
-                    item.quantity -= 1;
-                    if (item.quantity <= 0) {
-                        container.inventory = container.inventory.filter(i => i !== item);
-                    }
-                    console.log(`${npc.name} retrieved ${itemType} from ${container.buildingType}.`);
-                } else {
-                    console.log(`${container.buildingType} has no ${itemType}.`);
-                }
-            }
+
+        if (world.getDistance(npc.position, target.position) > 1.5) {
+            console.log(`${npc.name} failed to ${actionType}: Too far from target.`);
             world.resetAction(npc);
+            return;
+        }
+
+        const container = target.container;
+
+        if (actionType === 'store_item') {
+            this.handleStoreItem(npc, container);
+        } else if (actionType === 'retrieve_item') {
+            this.handleRetrieveItem(npc, container, world);
+        }
+
+        world.resetAction(npc);
+    }
+
+    private handleStoreItem(npc: NPC, container: Container): void {
+        // 1. Try to store item in hands first
+        if (npc.hands) {
+            this.addItemToContainer(container, npc.hands);
+            console.log(`${npc.name} stored ${npc.hands.type} in container.`);
+            npc.hands = null;
+            return;
+        }
+
+        // 2. If hands empty, try to store first item from inventory
+        if (npc.inventory.length > 0) {
+            const item = npc.inventory.shift();
+            if (item) {
+                this.addItemToContainer(container, item);
+                console.log(`${npc.name} stored ${item.type} from inventory in container.`);
+            }
+        } else {
+            console.log(`${npc.name} has nothing to store.`);
+        }
+    }
+
+    private handleRetrieveItem(npc: NPC, container: Container, world: WorldManager): void {
+        if (container.contents.length === 0) {
+            console.log(`${npc.name} failed to retrieve: Container is empty.`);
+            return;
+        }
+
+        // Simple logic: Take the last item added (LIFO) or first? Let's take first.
+        const item = container.contents.shift();
+        if (item) {
+            // Try to put in hands first
+            if (!npc.hands) {
+                npc.hands = item;
+                console.log(`${npc.name} retrieved ${item.type} into hands.`);
+            } else {
+                // Put in inventory
+                world.addToInventory(npc, item.type, item.quantity);
+                console.log(`${npc.name} retrieved ${item.type} into inventory.`);
+            }
+        }
+    }
+
+    private addItemToContainer(container: Container, item: InventoryItem): void {
+        // Check if item of same type exists to stack
+        const existing = container.contents.find(i => i.type === item.type);
+        if (existing) {
+            existing.quantity += item.quantity;
+        } else {
+            container.contents.push(item);
         }
     }
 }

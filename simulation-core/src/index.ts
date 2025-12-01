@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { WorldManager } from './world';
 import { WorldGenerator } from './world-generator';
+import { RESOURCE_TYPES, RESOURCE_METADATA, BIOME_METADATA, CONTAINER_TYPES, WORKSTATION_TYPES, WORKSTATION_METADATA } from './constants/entities';
 
 dotenv.config();
 
@@ -51,6 +52,17 @@ app.get('/map', (req, res) => {
 
 app.get('/state', (req, res) => {
   res.json(world.getState());
+});
+
+app.get('/meta/entities', (req, res) => {
+  res.json({
+    resourceTypes: RESOURCE_TYPES,
+    resourceMetadata: RESOURCE_METADATA,
+    biomeMetadata: BIOME_METADATA,
+    containerTypes: CONTAINER_TYPES,
+    workstationTypes: WORKSTATION_TYPES,
+    workstationMetadata: WORKSTATION_METADATA,
+  });
 });
 
 // Simulation control endpoints

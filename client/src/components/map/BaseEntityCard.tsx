@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Entity } from '../../types/world';
 import { EntityCard } from './EntityCard';
-import { getEntitySymbol } from '../../utils/entityUtils';
+import { useEntityVisuals } from '../../hooks/useEntityVisuals';
 import './BaseEntityCard.scss';
 
 interface BaseEntityCardProps {
@@ -16,6 +16,7 @@ export const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
   onUnpin 
 }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const { getEntitySymbol } = useEntityVisuals();
 
   const getEntityName = () => {
     if (entity.type === 'npc') return (entity as any).name;

@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ENTITY_ICONS } from '../../utils/entityUtils';
+
+// Local icon constants for UI
+const ENTITY_ICONS = {
+  NPC: '👨‍🌾',
+  BUILDING: '🏛️',
+  TREE: '🌲',
+  ROCK: '🪨',
+  FOOD: '🍎',
+};
 import type { Entity } from '../../types/world';
 import './EditorPanel.scss';
 

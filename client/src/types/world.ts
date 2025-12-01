@@ -27,10 +27,17 @@ export interface InventoryItem {
   quantity: number;
 }
 
+export interface Container {
+  capacity: number;
+  contents: InventoryItem[];
+  isOpen: boolean;
+}
+
 export interface Entity {
   id: string;
   type: 'npc' | 'building' | 'resource';
   position: Vector2;
+  container?: Container;
 }
 
 export interface NPC extends Entity {

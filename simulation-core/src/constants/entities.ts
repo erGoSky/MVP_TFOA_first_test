@@ -68,6 +68,73 @@ export const BUILDING_TYPES = {
 export type BuildingType = typeof BUILDING_TYPES[keyof typeof BUILDING_TYPES];
 
 // ============================================================================
+// CONTAINER TYPES
+// ============================================================================
+
+export const CONTAINER_TYPES = {
+  CHEST_SMALL: 'chest_small',
+  CHEST_LARGE: 'chest_large',
+  CRATE: 'crate',
+  BARREL: 'barrel',
+} as const;
+
+export type ContainerType = typeof CONTAINER_TYPES[keyof typeof CONTAINER_TYPES];
+
+
+// ============================================================================
+// WORKSTATION TYPES
+// ============================================================================
+
+export const WORKSTATION_TYPES = {
+  CRAFTING_TABLE: 'crafting_table',
+  FURNACE: 'furnace',
+  ANVIL: 'anvil',
+  LOOM: 'loom',
+} as const;
+
+export type WorkstationType = typeof WORKSTATION_TYPES[keyof typeof WORKSTATION_TYPES];
+
+
+// ============================================================================
+// WORKSTATION METADATA
+// ============================================================================
+
+export interface WorkstationMetadata {
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+}
+
+export const WORKSTATION_METADATA: Record<WorkstationType, WorkstationMetadata> = {
+  [WORKSTATION_TYPES.CRAFTING_TABLE]: {
+    name: 'Crafting Table',
+    icon: '🔨',
+    color: '#8B4513',
+    description: 'Basic crafting station for tools and items',
+  },
+  [WORKSTATION_TYPES.FURNACE]: {
+    name: 'Furnace',
+    icon: '🔥',
+    color: '#FF4500',
+    description: 'Smelts ores into ingots',
+  },
+  [WORKSTATION_TYPES.ANVIL]: {
+    name: 'Anvil',
+    icon: '⚒️',
+    color: '#696969',
+    description: 'Forges metal items and repairs tools',
+  },
+  [WORKSTATION_TYPES.LOOM]: {
+    name: 'Loom',
+    icon: '🧵',
+    color: '#DEB887',
+    description: 'Weaves cloth and fabric items',
+  },
+};
+
+
+// ============================================================================
 // RESOURCE METADATA
 // ============================================================================
 

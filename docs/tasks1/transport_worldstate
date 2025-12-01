@@ -1,0 +1,30 @@
+The communication transport between project parts needs to be refactored.
+
+We need to try to decouple/decompose this functionality as much as possible from the system's other business logic.
+
+The client needs to request full information about the world state upon initialization, and then request/view a list of change snapshots from the last received to the current one (ideally, only the latest snapshot should be retrieved).
+
+Each tick in the kernel, as it processes world events, accumulates world changes in the form of a change snapshot.
+
+Use Redis as a snapshot storage; the client also gets change snapshots from there if it needs more than just the latest one.
+
+Upon completion of the tick tasks, the change snapshot is saved to Redis.
+
+If you have any clarifying questions, please ask them.
+
+
+-----------------------------------------------------------
+
+нужно прорефакторить транспорт общения между частями проєкта 
+
+нужно постаратся максимально розвязать/декомпозировать єтот функционал от другой бизнеслогики системи
+
+нужно чтоб клиєнт при первой инициализации  запрашивал полную информация о состоянии мира, а после запрашивал/смотрел список слепоков изменений от последнего полученого по до текущего( в идеале получать только последний слепок)
+
+каждий тик в ядре, по мере обработки собитий в мире, накапливает изменения мира в виде слепка изменений мира.
+
+в качестве хранилищя слепков использовать редис от туда же клиенту и достаются слепки изменений если нужно не только последнее
+
+по завершению заданий тика слепок изменений сохраняєтся в редис, 
+
+если есть уточьняющие вопроси, задай их 

@@ -1,0 +1,19 @@
+After clicking on an NPC card on the dashboard, the NPC should center itself and the dashboard should switch to the map.
+
+It is necessary to optimize the sending of data between the client and the kernel.
+
+Each tick saves a snapshot of changes to the world in storage.
+
+The client needs to request full information about the world state upon initialization, and then request a list of snapshots of changes from the last one received to the current one.
+
+Limit the weight and capacity that NPCs can carry to encourage the use of chests.
+
+The chest is equipped with a simple lock when created, but it can be upgraded.
+
+If an NPC wants to protect his things, he can put them in his chest, which has a large volume and is not limited by the weight of its capacity.
+
+Any object that can be installed in the world, be it a house, a door, a chest, or a workbench, should have the ability to install a lock.
+
+locks come in varying complexity.have two characteristics: brute force resistance and pick resistance. the simplest one can be made from boards
+
+In the distant future, we need to make water streams.

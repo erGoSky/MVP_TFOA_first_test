@@ -3,11 +3,7 @@ export interface Vector2 {
   y: number;
 }
 
-export interface Entity {
-  id: string;
-  type: 'npc' | 'building' | 'resource';
-  position: Vector2;
-}
+
 
 export interface Needs {
   hunger: number; // 0-1 (0 = full, 1 = starving)
@@ -60,6 +56,19 @@ export interface InventoryItem {
   category?: ItemCategory;
   properties?: ItemProperties;
   contents?: InventoryItem[]; // For containers
+}
+
+export interface Container {
+  capacity: number;
+  contents: InventoryItem[];
+  isOpen: boolean;
+}
+
+export interface Entity {
+  id: string;
+  type: 'npc' | 'resource' | 'building';
+  position: Vector2;
+  container?: Container; // Optional storage component
 }
 
 

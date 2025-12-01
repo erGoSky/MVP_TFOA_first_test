@@ -1,6 +1,8 @@
 import { ActionHandler } from '../action-manager';
-import { NPC, WorldState } from '../../types';
+import { NPC, Building, Vector2 } from '../../types';
 import { WorldManager } from '../../world';
+import { RECIPES, getRecipe, type Recipe } from '../../constants/recipes';
+import type { WorkstationType } from '../../constants/entities';
 
 export class CraftingHandler implements ActionHandler {
     execute(npc: NPC, actionType: string, targetId: string, world: WorldManager): void {
@@ -9,7 +11,7 @@ export class CraftingHandler implements ActionHandler {
         if (actionType === 'eat') {
             const item = npc.inventory.find(i => i.type === targetId);
             if (item) {
-                npc.needs.hunger = Math.min(1, npc.needs.hunger + 0.3);
+                npc.needs.hunger = Math.max(0, npc.needs.hunger - 0.3);
                 npc.needs.energy = Math.min(1, npc.needs.energy + 0.1);
                 
                 // Consume item
@@ -22,75 +24,97 @@ export class CraftingHandler implements ActionHandler {
             world.resetAction(npc);
         }
         else if (actionType === 'craft') {
-             // Crafting logic
-             // targetId is recipe name? e.g. 'craft:axe' -> targetId = 'axe'
-             // Need recipes. Assuming simple logic for now or moving recipes to WorldManager.
-             
-             if (targetId === 'axe') {
-                 // Check wood and stone
-                 const wood = npc.inventory.find(i => i.type === 'wood');
-                 const stone = npc.inventory.find(i => i.type === 'stone');
-                 
-                 if (wood && wood.quantity >= 1 && stone && stone.quantity >= 1) {
-                     wood.quantity -= 1;
-                     stone.quantity -= 1;
-                     if (wood.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== wood);
-                     if (stone.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== stone);
-                     
-                     npc.inventory.push({ id: `axe_${Date.now()}`, type: 'axe', quantity: 1 });
-                     console.log(`${npc.name} crafted an axe.`);
-                     npc.skills.crafting = Math.min(100, npc.skills.crafting + 5);
-                 } else {
-                     console.log(`${npc.name} failed to craft axe (missing mats).`);
-                 }
-             } else if (targetId === 'plank') {
-                 // Check wood
-                 const woodItems = ['tree', 'tree_oak', 'tree_pine', 'fallen_log', 'wood'];
-                 const wood = npc.inventory.find(i => woodItems.includes(i.type));
-                 
-                 if (wood && wood.quantity >= 1) {
-                     wood.quantity -= 1;
-                     if (wood.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== wood);
-                     
-                     npc.inventory.push({ id: `plank_${Date.now()}`, type: 'plank', quantity: 2 });
-                     console.log(`${npc.name} crafted planks.`);
-                     npc.skills.crafting = Math.min(100, npc.skills.crafting + 2);
-                 } else {
-                     console.log(`${npc.name} failed to craft plank (missing wood).`);
-                 }
-             } else if (targetId === 'chest') {
-                 // Chest requires wood (planks) and stone
-                 const wood = npc.inventory.find(i => ['plank', 'wood'].includes(i.type));
-                 const stone = npc.inventory.find(i => i.type === 'stone');
-                 
-                 if (wood && wood.quantity >= 4 && stone && stone.quantity >= 2) {
-                     wood.quantity -= 4;
-                     stone.quantity -= 2;
-                     if (wood.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== wood);
-                     if (stone.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== stone);
-                     
-                     npc.inventory.push({ id: `chest_${Date.now()}`, type: 'chest', quantity: 1, category: 'bulky' });
-                     console.log(`${npc.name} crafted a chest.`);
-                     npc.skills.crafting = Math.min(100, npc.skills.crafting + 8);
-                 } else {
-                     console.log(`${npc.name} failed to craft chest (needs 4 wood, 2 stone).`);
-                 }
-             } else if (targetId === 'sack') {
-                 // Sack requires plant fiber
-                 const fiber = npc.inventory.find(i => i.type === 'plant_fiber');
-                 
-                 if (fiber && fiber.quantity >= 3) {
-                     fiber.quantity -= 3;
-                     if (fiber.quantity <= 0) npc.inventory = npc.inventory.filter(i => i !== fiber);
-                     
-                     npc.inventory.push({ id: `sack_${Date.now()}`, type: 'sack', quantity: 1, category: 'small' });
-                     console.log(`${npc.name} crafted a sack.`);
-                     npc.skills.crafting = Math.min(100, npc.skills.crafting + 5);
-                 } else {
-                     console.log(`${npc.name} failed to craft sack (needs 3 plant_fiber).`);
-                 }
-             }
-             world.resetAction(npc);
+            this.handleCrafting(npc, targetId, world);
         }
+    }
+
+    private handleCrafting(npc: NPC, recipeId: string, world: WorldManager): void {
+        const recipe = getRecipe(recipeId);
+        
+        if (!recipe) {
+            console.log(`${npc.name} failed to craft: Recipe '${recipeId}' not found`);
+            world.resetAction(npc);
+            return;
+        }
+
+        // Check workstation requirement
+        if (recipe.requiredWorkstation) {
+            const nearbyWorkstation = this.findNearbyWorkstation(
+                npc.position,
+                recipe.requiredWorkstation,
+                world
+            );
+            
+            if (!nearbyWorkstation) {
+                console.log(`${npc.name} needs ${recipe.requiredWorkstation} to craft ${recipe.name}`);
+                world.resetAction(npc);
+                return;
+            }
+        }
+
+        // Check skill requirement
+        if (recipe.skillRequired) {
+            const npcSkill = (npc.skills as any)[recipe.skillRequired.skill] || 0;
+            if (npcSkill < recipe.skillRequired.level) {
+                console.log(`${npc.name} lacks ${recipe.skillRequired.skill} skill (${npcSkill}/${recipe.skillRequired.level}) to craft ${recipe.name}`);
+                world.resetAction(npc);
+                return;
+            }
+        }
+
+        // Check if NPC has required materials
+        const hasAllMaterials = recipe.inputs.every(input => {
+            const item = npc.inventory.find(i => i.type === input.type);
+            return item && item.quantity >= input.quantity;
+        });
+
+        if (!hasAllMaterials) {
+            console.log(`${npc.name} lacks materials to craft ${recipe.name}`);
+            world.resetAction(npc);
+            return;
+        }
+
+        // Consume materials
+        recipe.inputs.forEach(input => {
+            const item = npc.inventory.find(i => i.type === input.type);
+            if (item) {
+                item.quantity -= input.quantity;
+                if (item.quantity <= 0) {
+                    npc.inventory = npc.inventory.filter(i => i !== item);
+                }
+            }
+        });
+
+        // Add crafted item to inventory
+        const existingOutput = npc.inventory.find(i => i.type === recipe.output.type);
+        if (existingOutput) {
+            existingOutput.quantity += recipe.output.quantity;
+        } else {
+            npc.inventory.push({
+                id: `${recipe.output.type}_${Date.now()}`,
+                type: recipe.output.type,
+                quantity: recipe.output.quantity,
+            });
+        }
+
+        console.log(`${npc.name} crafted ${recipe.output.quantity}x ${recipe.name}`);
+        
+        // Increase crafting skill
+        const skillGain = recipe.skillRequired ? 3 : 2;
+        npc.skills.crafting = Math.min(100, npc.skills.crafting + skillGain);
+
+        world.resetAction(npc);
+    }
+
+    private findNearbyWorkstation(
+        position: Vector2,
+        workstationType: WorkstationType,
+        world: WorldManager
+    ): Building | null {
+        const buildings = Object.values(world.getState().buildings);
+        return buildings.find(b => 
+            b.buildingType === workstationType &&
+            world.getDistance(position, b.position) <= 2
+        ) || null;
     }
 }

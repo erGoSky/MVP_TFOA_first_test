@@ -3,8 +3,16 @@ import type { WorldState, Entity } from '../../types/world';
 import { PinnedCard } from './PinnedCard';
 import { EditorPanel } from '../editor/EditorPanel';
 import type { EditorState } from '../editor/EditorPanel';
-import { ENTITY_ICONS } from '../../utils/entityUtils';
 import './Sidebar.scss';
+
+// Local icon constants for UI
+const ENTITY_ICONS = {
+  NPC: '👨‍🌾',
+  BUILDING: '🏛️',
+  TREE: '🌲',
+  ROCK: '🪨',
+  FOOD: '🍎',
+};
 
 interface SidebarProps {
   worldState: WorldState | null;

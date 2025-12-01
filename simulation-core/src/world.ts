@@ -1,4 +1,4 @@
-import { WorldState, NPC, Vector2, Resource, InventoryItem, Building, Skills, BuildingTemplate, Contract, ContractStatus } from './types';
+import { WorldState, NPC, Vector2, Resource, InventoryItem, Building, Skills, BuildingTemplate, Contract, ContractStatus, Entity } from './types';
 import axios from 'axios';
 import { PersonalityGenerator } from './personality/generator';
 import { ActionManager } from './actions/action-manager';
@@ -42,7 +42,7 @@ export class WorldManager {
         this.actionManager.registerHandler(act, contractHandler)
     );
     
-    ['store', 'retrieve'].forEach(act => this.actionManager.registerHandler(act, storageHandler));
+    ['store_item', 'retrieve_item'].forEach(act => this.actionManager.registerHandler(act, storageHandler));
     
     ['sleep', 'work'].forEach(act => this.actionManager.registerHandler(act, generalHandler));
     
@@ -127,6 +127,38 @@ export class WorldManager {
     };
     this.state.resources[id] = res;
     this.state.entities[id] = res;
+  }
+
+  public createContainer(id: string, type: string, position: Vector2, capacity: number = 10) {
+    const entity: Entity = {
+      id,
+      type: 'building', // Containers are buildings for now? Or generic entities?
+      // If I use 'building', it goes to buildings map. If 'resource', resources map.
+      // Let's use 'building' for placed containers like chests.
+      position,
+      container: {
+        capacity,
+        contents: [],
+        isOpen: false
+      }
+    };
+    // But wait, Building interface has specific fields.
+    // If I use 'building', I need to satisfy Building interface.
+    // Let's make a generic entity list or add to buildings.
+    // For now, let's treat standalone containers as buildings with a specific buildingType.
+    
+    const building: Building = {
+        ...entity,
+        type: 'building',
+        buildingType: type, // e.g. 'chest_small'
+        inventory: [], // Shop inventory? Or should I map container.contents to this?
+        // The Building interface has 'inventory'. My new Entity interface has 'container'.
+        // This is a bit redundant.
+        // Let's use the new 'container' property for the actual storage logic.
+        gold: 0
+    };
+    
+    this.state.buildings[id] = building;
   }
 
   public createBuilding(id: string, type: string, position: Vector2) {

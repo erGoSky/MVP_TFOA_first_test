@@ -160,6 +160,33 @@ export class WorldGenerator {
 
     if (this.isValidBuildSpot(pos)) {
         this.world.createBuilding('b_tavern', 'tavern', pos);
+        
+        // Place a chest next to the tavern
+        const chestPos = { x: pos.x + 1, y: pos.y };
+        if (this.isValidBuildSpot(chestPos)) {
+            this.world.createContainer('c_tavern_chest', 'chest_small', chestPos, 20);
+            // Add some starter items
+            const chest = this.world.getState().buildings['c_tavern_chest'].container;
+            if (chest) {
+                chest.contents.push({ id: 'i_starter_bread', type: 'bread', quantity: 5 });
+                chest.contents.push({ id: 'i_starter_water', type: 'water_flask', quantity: 5 });
+            }
+        }
+        
+        // Place workstations around the tavern
+        const workstations = [
+            { id: 'ws_crafting_table', type: 'crafting_table', offset: { x: 2, y: 0 } },
+            { id: 'ws_furnace', type: 'furnace', offset: { x: 0, y: 2 } },
+            { id: 'ws_anvil', type: 'anvil', offset: { x: -2, y: 0 } },
+            { id: 'ws_loom', type: 'loom', offset: { x: 0, y: -2 } },
+        ];
+        
+        workstations.forEach(ws => {
+            const wsPos = { x: pos.x + ws.offset.x, y: pos.y + ws.offset.y };
+            if (this.isValidBuildSpot(wsPos)) {
+                this.world.createBuilding(ws.id, ws.type, wsPos);
+            }
+        });
     }
   }
 

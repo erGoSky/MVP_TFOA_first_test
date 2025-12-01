@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import type { WorldState, Entity, NPC } from '../types/world';
-import { getEntityColor, getEntitySymbol, BIOME_COLORS } from '../utils/entityUtils';
+import { useEntityVisuals } from './useEntityVisuals';
+import { useMetadata } from '../context/MetadataContext';
 
 export interface CanvasTransform {
   scale: number;
@@ -15,6 +16,10 @@ export function useCanvas(
   onTransformChange: (newTransform: CanvasTransform) => void
 ) {
   const TILE_SIZE = 32;
+
+  // Use metadata hooks
+  const { getEntitySymbol, getEntityColor } = useEntityVisuals();
+  const { biomeMetadata } = useMetadata();
 
   // Internal state for dragging
   const isDragging = useRef(false);
@@ -63,12 +68,23 @@ export function useCanvas(
         const endX = startX + (canvas.width / transform.scale / TILE_SIZE) + 1;
         const endY = startY + (canvas.height / transform.scale / TILE_SIZE) + 1;
 
+        // Hardcoded biome colors as fallback
+        const BIOME_FALLBACKS: Record<string, string> = {
+          forest: '#2E8B57',
+          plains: '#90EE90',
+          desert: '#F4A460',
+          mountain: '#808080',
+          swamp: '#556B2F',
+          water: '#4169E1',
+        };
+
         for (let y = Math.max(0, startY); y < Math.min(worldState.height || 100, endY); y++) {
             for (let x = Math.max(0, startX); x < Math.min(worldState.width || 100, endX); x++) {
                 const tile = worldState.tiles[y]?.[x];
                 if (tile) {
-                    const biomeData = BIOME_COLORS[tile.biome];
-                    ctx.fillStyle = biomeData?.color || '#1a1a2e';
+                    const biomeData = biomeMetadata?.[tile.biome];
+                    const color = biomeData?.color || BIOME_FALLBACKS[tile.biome] || '#1a1a2e';
+                    ctx.fillStyle = color;
                     ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
