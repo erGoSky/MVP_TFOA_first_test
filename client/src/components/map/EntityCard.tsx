@@ -48,9 +48,32 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
           <div className="card-label">🎒 Inventory ({npc.inventory.length}):</div>
           <div className="inventory-items">
             {npc.inventory.length > 0 ? (
-              npc.inventory.map((item, i) => (
-                <div key={i} className="inventory-item">{item.type} x{item.quantity}</div>
-              ))
+              npc.inventory.map((item, i) => {
+                const durability = item.properties?.durability;
+                const maxDurability = item.properties?.maxDurability;
+                let durabilityPct = 0;
+                let durabilityClass = '';
+                
+                if (durability !== undefined && maxDurability) {
+                  durabilityPct = (durability / maxDurability) * 100;
+                  if (durabilityPct < 30) durabilityClass = 'low';
+                  else if (durabilityPct < 70) durabilityClass = 'medium';
+                }
+
+                return (
+                  <div key={i} className="inventory-item">
+                    <span>{item.type} x{item.quantity}</span>
+                    {durability !== undefined && (
+                      <div className="durability-bar">
+                        <div 
+                          className={`fill ${durabilityClass}`} 
+                          style={{ width: `${durabilityPct}%` }} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="inventory-item empty">Empty</div>
             )}

@@ -21,10 +21,20 @@ export interface Skills {
   trading: number;
 }
 
+export interface ItemProperties {
+  volume?: number;
+  weight?: number;
+  quality?: number;
+  durability?: number;
+  maxDurability?: number;
+  freshness?: number;
+}
+
 export interface InventoryItem {
   id: string;
   type: string;
   quantity: number;
+  properties?: ItemProperties;
 }
 
 export interface Container {

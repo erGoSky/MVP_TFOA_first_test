@@ -3,6 +3,7 @@ import { NPC, Building, Vector2 } from '../../types';
 import { WorldManager } from '../../world';
 import { RECIPES, getRecipe, type Recipe } from '../../constants/recipes';
 import type { WorkstationType } from '../../constants/entities';
+import { ITEM_DURABILITY } from '../../constants/items';
 
 export class CraftingHandler implements ActionHandler {
     execute(npc: NPC, actionType: string, targetId: string, world: WorldManager): void {
@@ -86,15 +87,32 @@ export class CraftingHandler implements ActionHandler {
         });
 
         // Add crafted item to inventory
-        const existingOutput = npc.inventory.find(i => i.type === recipe.output.type);
-        if (existingOutput) {
-            existingOutput.quantity += recipe.output.quantity;
-        } else {
+        // Add crafted item to inventory
+        const maxDurability = ITEM_DURABILITY[recipe.output.type];
+        
+        if (maxDurability) {
+            // Durable items (tools) do not stack
             npc.inventory.push({
                 id: `${recipe.output.type}_${Date.now()}`,
                 type: recipe.output.type,
                 quantity: recipe.output.quantity,
+                properties: {
+                    durability: maxDurability,
+                    maxDurability: maxDurability
+                }
             });
+        } else {
+            // Stackable items
+            const existingOutput = npc.inventory.find(i => i.type === recipe.output.type);
+            if (existingOutput) {
+                existingOutput.quantity += recipe.output.quantity;
+            } else {
+                npc.inventory.push({
+                    id: `${recipe.output.type}_${Date.now()}`,
+                    type: recipe.output.type,
+                    quantity: recipe.output.quantity,
+                });
+            }
         }
 
         console.log(`${npc.name} crafted ${recipe.output.quantity}x ${recipe.name}`);

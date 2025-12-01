@@ -24,6 +24,7 @@ export interface ItemProperties {
   weight?: number;
   quality?: number;
   durability?: number;
+  maxDurability?: number;
   freshness?: number;
 }
 
