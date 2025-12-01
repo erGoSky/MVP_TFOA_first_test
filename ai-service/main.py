@@ -182,6 +182,15 @@ def calculate_utility(data: UtilityRequest):
 
 
 # GOAP Integration
+from planning.types import Goal, GoalType, WorldState
+from planning.action_registry import registry as action_registry
+from planning.economic_planner import EconomicPlanner
+
+class EnhancedPlanRequest(BaseModel):
+    npc_state: Dict[str, Any]  # NPC state (position, inventory, skills, stats)
+    goal: Dict[str, Any]  # Goal from TypeScript
+    world_state: Dict[str, Any]  # Resources, buildings, quest board, market prices
+
 class PlanRequest(BaseModel):
     start_state: Dict[str, Any]
     goal_state: Dict[str, Any]
@@ -189,6 +198,10 @@ class PlanRequest(BaseModel):
 
 @app.post("/plan_action")
 def plan_action(data: PlanRequest):
+    """
+    Basic GOAP planning endpoint (legacy).
+    Use /plan_action_enhanced for full GOAP with economic intelligence.
+    """
     # Convert dict actions to Action objects
     actions = []
     for a in data.available_actions:
@@ -204,5 +217,112 @@ def plan_action(data: PlanRequest):
     
     return {"plan": plan}
 
+@app.post("/plan_action_enhanced")
+def plan_action_enhanced(data: EnhancedPlanRequest):
+    """
+    Enhanced GOAP planning with economic intelligence.
+    
+    Returns complete action sequence to achieve goal.
+    TypeScript will execute actions tick-by-tick.
+    """
+    try:
+        # Extract data
+        npc_state = data.npc_state
+        goal = data.goal
+        world_state_data = data.world_state
+        
+        # Get all available actions from registry
+        all_actions = action_registry.get_all_actions()
+        
+        # Apply personality-based cost modifiers
+        personality = npc_state.get('personality', {})
+        for action in all_actions:
+            action.cost = action_registry.calculate_cost(action.name, personality)
+        
+        # Check if goal involves obtaining an item
+        goal_type = goal.get('type')
+        if goal_type == 'obtain_item':
+            item = goal.get('item')
+            
+            # Use economic planner to decide: craft vs. work-and-buy
+            economic_planner = EconomicPlanner()
+            strategy, details = economic_planner.get_acquisition_plan(
+                item, npc_state, world_state_data
+            )
+            
+            print(f"📊 Economic decision for {item}: {strategy}")
+            print(f"   Details: {details}")
+            
+            # Modify goal based on strategy
+            if strategy == 'work_and_buy':
+                # Plan: work to earn gold, then buy
+                best_profession = details['best_profession']
+                goal_state = {
+                    'has_gold': details['gold_needed'],
+                    f'has_{item}': True
+                }
+            else:
+                # Plan: craft item
+                goal_state = {f'has_{item}': True}
+        else:
+            # Convert goal conditions to goal_state
+            goal_state = {}
+            for condition in goal.get('conditions', []):
+                goal_state[condition['key']] = condition['value']
+        
+        # Create start state from NPC state
+        start_state = {
+            'pos_x': npc_state.get('position', {}).get('x', 0),
+            'pos_y': npc_state.get('position', {}).get('y', 0),
+            'energy': npc_state.get('stats', {}).get('energy', 1.0),
+            'hunger': npc_state.get('stats', {}).get('hunger', 0.0),
+            'health': npc_state.get('stats', {}).get('health', 100),
+            'gold': npc_state.get('stats', {}).get('money', 0)
+        }
+        
+        # Add inventory to state
+        for item in npc_state.get('inventory', []):
+            item_type = item.get('type')
+            quantity = item.get('quantity', 0)
+            start_state[f'has_{item_type}'] = quantity
+        
+        # Add skills to state
+        for skill_name, level in npc_state.get('skills', {}).items():
+            start_state[f'skill_{skill_name}'] = level
+        
+        # Run GOAP planner
+        planner = GOAPPlanner(all_actions, max_depth=15)
+        plan = planner.plan(start_state, goal_state)
+        
+        if not plan:
+            return {
+                "success": False,
+                "plan": [],
+                "error": "No plan found to achieve goal"
+            }
+        
+        # Validate plan
+        is_valid = planner.validate_plan(plan, start_state, goal_state)
+        total_cost = planner.get_plan_cost(plan)
+        
+        return {
+            "success": True,
+            "plan": plan,
+            "valid": is_valid,
+            "total_cost": total_cost,
+            "economic_strategy": strategy if goal_type == 'obtain_item' else None
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in plan_action_enhanced: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "plan": [],
+            "error": str(e)
+        }
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

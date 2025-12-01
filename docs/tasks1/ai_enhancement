@@ -16,3 +16,20 @@ We need to add action planning, with an action stack. For example, if the AI ​
 That is, it is necessary to construct a goal achievement graph and evaluate/find the most optimal path to achieving this goal, following stages in the form of nodes/(intermediate tasks).
 тоєсть нужно построить граф достижения цели и оценить/найти найболее оптимальный путь
 к достижению этой цели следуя етапам в виде нод/(промежуточних задачь) 
+
+
+We need to add NPC action planning, add a stack of planned actions, for example: (further example is needed to create a general solution) The AI ​​decides it needs a crate, which means it needs resources to craft the crate, or resources to buy the crate with. If it decides to craft the crate itself, it must consider where it can get the resources for this crate. It can either try to obtain them itself or try to buy these resources. If it decides to obtain these resources itself, it must determine which basic resources it needs to obtain and how to process these resources to obtain materials for crafting the chest.
+
+That is, we need to build a goal achievement graph and evaluate/find the most optimal path to achieving this goal following stages in the form of nodes/(intermediate tasks).
+The NPC should have several action queues, one global (for example, reaching a certain level in a certain skill), and another local to meet current needs.
+
+FSD.AI.101: Each NPC must possess a Dynamic Goal Achievement Graph that updates whenever their Needs, Capital, or Inventory change.
+FSD.AI.102: The system must allow the decomposition of any Economic Goal (e.g., Final Product) into Base Actions (Extraction/Gathering, Buying on the Quest Board).
+FSD.AI.103: An NPC must have the ability to "repeat" or "set to loop" successfully executed Base Actions (e.g., [Tree Chopping]) to satisfy a Global Goal (skill advancement/leveling).
+FSD.AI.104: If an NPC decides to Buy a resource, this action must automatically generate an Order on the Quest Board with a price calculated based on the NPC's current Capital and expected Profit Margin.
+
+PRD.AI.201 (Decision Audit): The game must provide the player (in the role of the Mayor/Guildmaster) with a Decision Audit Tool for NPC economic choices, showing why the NPC chose the Buying path instead of the Crafting path (i.e., demonstrating their path cost evaluation $\mathbf{W_{path}}$).
+PRD.AI.202 (Scalability): The planning system must be sufficiently efficient to simultaneously manage 100+ NPCs who are constantly updating their Action Stacks.
+PRD.AI.203 (Emergence): The interaction between NPCs (one creating an order, another fulfilling it) must naturally lead to Emergent Supply Chains that the player can observe and strategically influence.
+
+create plan realisation

@@ -20,6 +20,7 @@ export interface EditorState {
   selectedType: EntityType;
   resourceType: string;
   buildingType: string;
+  npcArchetype: string;
 }
 
 interface EditorPanelProps {
@@ -70,6 +71,35 @@ const RESOURCE_CATEGORIES: EntityCategory[] = [
     icon: '💧',
     items: [
       { value: 'water_source', label: 'Water Source', description: 'Provides water' },
+    ]
+  }
+];
+
+const NPC_CATEGORIES: EntityCategory[] = [
+  {
+    name: 'Villagers',
+    icon: '👨‍🌾',
+    items: [
+      { value: 'farmer', label: 'Farmer', description: 'Grows food' },
+      { value: 'builder', label: 'Builder', description: 'Constructs buildings' },
+      { value: 'artisan', label: 'Artisan', description: 'Crafts items' },
+    ]
+  },
+  {
+    name: 'Specialists',
+    icon: '🎓',
+    items: [
+      { value: 'merchant', label: 'Merchant', description: 'Trades goods' },
+      { value: 'scholar', label: 'Scholar', description: 'Researches knowledge' },
+    ]
+  },
+  {
+    name: 'Outsiders',
+    icon: '🏕️',
+    items: [
+      { value: 'hermit', label: 'Hermit', description: 'Lives in isolation' },
+      { value: 'adventurer', label: 'Adventurer', description: 'Explores the world' },
+      { value: 'warrior', label: 'Warrior', description: 'Fights enemies' },
     ]
   }
 ];
@@ -205,7 +235,6 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             </button>
             <button 
               className={`type-btn ${editorState.selectedType === 'resource' ? 'active' : ''}`}
-              onClick={() => updateState({ selectedType: 'resource' })}
             >
               {ENTITY_ICONS.TREE} Resource
             </button>
@@ -217,7 +246,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             </button>
           </div>
 
-          {(editorState.selectedType === 'resource' || editorState.selectedType === 'building') && (
+          {(editorState.selectedType === 'resource' || editorState.selectedType === 'building' || editorState.selectedType === 'npc') && (
             <>
               <div className="search-box">
                 <input
@@ -229,7 +258,12 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               </div>
 
               <div className="categories">
-                {(editorState.selectedType === 'resource' ? RESOURCE_CATEGORIES : BUILDING_CATEGORIES).map(category => {
+                {(editorState.selectedType === 'resource' 
+                    ? RESOURCE_CATEGORIES 
+                    : editorState.selectedType === 'building' 
+                        ? BUILDING_CATEGORIES 
+                        : NPC_CATEGORIES
+                ).map(category => {
                   const filteredItems = filterItems(category.items);
                   if (filteredItems.length === 0) return null;
 
@@ -252,13 +286,16 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                               <button
                                 className={`item-btn ${
                                   (editorState.selectedType === 'resource' && editorState.resourceType === item.value) ||
-                                  (editorState.selectedType === 'building' && editorState.buildingType === item.value)
+                                  (editorState.selectedType === 'building' && editorState.buildingType === item.value) ||
+                                  (editorState.selectedType === 'npc' && editorState.npcArchetype === item.value)
                                     ? 'active' : ''
                                 }`}
                                 onClick={() => updateState(
                                   editorState.selectedType === 'resource' 
                                     ? { resourceType: item.value }
-                                    : { buildingType: item.value }
+                                    : editorState.selectedType === 'building'
+                                        ? { buildingType: item.value }
+                                        : { npcArchetype: item.value }
                                 )}
                               >
                                 {item.label}

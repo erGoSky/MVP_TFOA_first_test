@@ -28,7 +28,8 @@ export const MapViewer: React.FC = () => {
     tool: 'select',
     selectedType: 'npc',
     resourceType: 'oak_tree',
-    buildingType: 'house_small'
+    buildingType: 'house_small',
+    npcArchetype: 'villager'
   });
 
   // Editor selection
@@ -72,16 +73,6 @@ export const MapViewer: React.FC = () => {
     });
   };
 
-  // Handle click on canvas (via global event or passed down handler if needed)
-  // Since canvas is now global, we might need a way to intercept clicks for pinning
-  // For now, let's assume we can pin via hover card or sidebar, or we need to add a global click handler in AppLayout that calls a callback here?
-  // Actually, AppLayout handles the canvas. If we want to pin on click, AppLayout needs to know about this.
-  // OR, we can use the fact that we have hoveredEntities from context.
-  // If we click anywhere and there are hovered entities, we can pin them.
-  // But the click listener is on the canvas in AppLayout.
-  
-  // Let's add a global click handler effect here that listens to the window/document
-  // and checks if we are hovering something.
   useEffect(() => {
     const handleClick = async (e: MouseEvent) => {
       // Ignore clicks on UI elements
@@ -104,10 +95,10 @@ export const MapViewer: React.FC = () => {
           if (editorState.selectedType === 'npc') {
             body.name = 'New NPC';
             body.skills = { gathering: 10, crafting: 10, trading: 10 };
+            body.archetype = editorState.npcArchetype;
           } else if (editorState.selectedType === 'resource') {
             body.resourceType = editorState.resourceType;
             body.amount = 10;
-            // Fetch props from map or defaults? For now simple defaults
             body.properties = { value: 1 }; 
           } else if (editorState.selectedType === 'building') {
             body.buildingType = editorState.buildingType;

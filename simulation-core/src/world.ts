@@ -16,15 +16,20 @@ import { IdleHandler } from './actions/handlers/idle.handler';
 const AI_SERVICE_URL = 'http://localhost:8000';
 
 import { MemorySystem } from './ai/memory.system';
+import { GoalManager } from './ai/goal-manager';
+import { GoalGenerator } from './ai/goal-generator';
+import { PlanExecutor } from './ai/plan-executor';
 
 export class WorldManager {
   private state: WorldState;
   private actionManager: ActionManager;
   private memorySystem: MemorySystem;
+  private goalManager: GoalManager;
 
   constructor() {
     this.actionManager = new ActionManager();
     this.memorySystem = new MemorySystem();
+    this.goalManager = new GoalManager();
     
     // ... handlers ...
     const moveHandler = new MoveHandler();
@@ -49,16 +54,17 @@ export class WorldManager {
     
     ['store_item', 'retrieve_item'].forEach(act => this.actionManager.registerHandler(act, storageHandler));
     
-    ['sleep', 'work'].forEach(act => this.actionManager.registerHandler(act, generalHandler));
+    ['eat', 'drink', 'sleep'].forEach(act => this.actionManager.registerHandler(act, generalHandler));
     
-    ['eat', 'craft'].forEach(act => this.actionManager.registerHandler(act, craftingHandler));
+    ['craft', 'process', 'repair'].forEach(act => this.actionManager.registerHandler(act, craftingHandler));
     
-    ['sell', 'buy'].forEach(act => this.actionManager.registerHandler(act, tradingHandler));
+    ['buy', 'sell', 'post_order', 'accept_order'].forEach(act => this.actionManager.registerHandler(act, tradingHandler));
     
-    ['place'].forEach(act => this.actionManager.registerHandler(act, handActions));
+    ['equip', 'unequip'].forEach(act => this.actionManager.registerHandler(act, handActions));
     
     this.actionManager.registerHandler('idle', idleHandler);
-
+    
+    // Initialize state
     this.state = {
       tick: 0,
       time: 0,
@@ -183,32 +189,127 @@ export class WorldManager {
     this.state.entities[id] = building;
   }
 
-  public updateNPC(npc: NPC) {
-      if (!npc.currentAction) {
-        this.decideAction(npc);
+  public async updateNPC(npc: NPC) {
+    // 1. Update Memory
+    this.memorySystem.updateMemory(npc, this.state);
+    
+    // 2. Handle Active Action
+    if (npc.actionState.inProgress) {
+        // Check if action is complete
+        const elapsed = this.state.tick - npc.actionState.startTime;
+        if (elapsed >= npc.actionState.duration) {
+            // Execute action effect
+            if (npc.currentAction) {
+                this.actionManager.executeAction(npc, npc.currentAction, this);
+                PlanExecutor.completeAction(npc, this);
+            }
+        }
+        return; // Busy executing
+    }
+
+    // 3. Check Plan Status
+    if (PlanExecutor.hasActivePlan(npc)) {
+        // Continue existing plan
+        PlanExecutor.startNextAction(npc, this);
         return;
+    }
+
+    // 4. Goal Management (if no active plan)
+    // Generate new goals
+    const newGoals = GoalGenerator.generateGoals(npc, this.state, this.state.tick);
+    newGoals.forEach(goal => this.goalManager.addGoal(npc.id, goal));
+
+    // Get highest priority goal
+    const activeGoal = this.goalManager.getNextGoal(npc.id);
+    
+    if (activeGoal) {
+        // 5. Request Plan for Goal
+        console.log(`🎯 ${npc.name} pursuing goal: ${activeGoal.type} (${activeGoal.id})`);
+        const plan = await this.requestPlan(npc, activeGoal);
+        
+        if (plan && plan.length > 0) {
+            console.log(`📝 Plan received for ${npc.name}: ${plan.join(' -> ')}`);
+            npc.actionPlan = {
+                actions: plan,
+                currentIndex: 0
+            };
+            PlanExecutor.startNextAction(npc, this);
+        } else {
+            console.log(`⚠️ No plan found for goal ${activeGoal.id}, abandoning.`);
+            this.goalManager.abandonGoal(npc.id, "No plan found");
+            // Fallback to idle
+            npc.currentAction = 'idle';
+            npc.actionState = { inProgress: true, startTime: this.state.tick, duration: 10 };
+        }
+    } else {
+        // No goals? Idle.
+        npc.currentAction = 'idle';
+        npc.actionState = { inProgress: true, startTime: this.state.tick, duration: 10 };
+    }
+  }
+
+  private async requestPlan(npc: NPC, goal: any): Promise<string[] | null> {
+      try {
+          const worldStateForAI = this.getWorldStateForAI(npc);
+          
+          const response = await axios.post(`${AI_SERVICE_URL}/plan_action_enhanced`, {
+              npc_state: {
+                  id: npc.id,
+                  name: npc.name,
+                  position: npc.position,
+                  inventory: npc.inventory,
+                  skills: npc.skills,
+                  stats: npc.stats,
+                  personality: npc.personality
+              },
+              goal: goal,
+              world_state: worldStateForAI
+          });
+
+          if (response.data.success) {
+              return response.data.plan;
+          } else {
+              console.warn(`Planning failed for ${npc.name}: ${response.data.error}`);
+              return null;
+          }
+      } catch (error: any) {
+          console.error(`API Error for ${npc.name}:`, error.message);
+          return null;
       }
-      const [actionType] = npc.currentAction.split(':');
+  }
+
+  private getWorldStateForAI(npc: NPC): any {
+      // Serialize relevant world state for AI planning
+      // This should be optimized to not send the entire world
       
-      if (actionType === 'move') {
-          this.actionManager.executeAction(npc, npc.currentAction, this);
-          return;
-      }
+      // 1. Get known resources from memory
+      const knownResources: Record<string, any> = {};
+      npc.memory.locations.forEach((mem, id) => {
+          if (mem.type === 'resource') {
+              knownResources[id] = {
+                  type: mem.subtype,
+                  position: mem.position
+              };
+          }
+      });
 
-      if (this.state.tick < npc.actionState.startTime + npc.actionState.duration) {
-          return;
-      }
+      // 2. Get market prices (global knowledge for now)
+      // TODO: Implement actual market system
+      const marketPrices: Record<string, number> = {
+          'wood': 5,
+          'stone': 2,
+          'iron_ore': 10,
+          'gold_ore': 50,
+          'sword': 50,
+          'bread': 5
+      };
 
-      // 3. Completion Phase
-      this.actionManager.executeAction(npc, npc.currentAction, this);
-
-      // Apply Action Costs (once per action completion)
-      if (actionType !== 'sleep') {
-           const baseEnergyCost = 0.05;
-           const baseHungerCost = 0.02;
-           npc.needs.energy = Math.max(0, npc.needs.energy - baseEnergyCost);
-           npc.needs.hunger = Math.min(1, npc.needs.hunger + baseHungerCost);
-      }
+      return {
+          resources: knownResources,
+          buildings: {}, // TODO: Add known buildings
+          market_prices: marketPrices,
+          quest_board: [] // TODO: Add quests
+      };
   }
 
   public resetAction(npc: NPC) {

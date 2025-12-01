@@ -26,6 +26,17 @@
     margin-bottom: 8px;
   }
 
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
   .stat-bar {
     background: rgba(0, 0, 0, 0.3);
     height: 18px;

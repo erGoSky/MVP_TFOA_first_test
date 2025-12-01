@@ -141,13 +141,37 @@ export function useCanvas(
       ctx.textBaseline = 'middle';
       ctx.fillText(getEntitySymbol(entity), x + TILE_SIZE / 2, y + TILE_SIZE / 2);
 
-      // Draw status indicators for NPCs
+      // Draw status indicators
       if (entity.type === 'npc') {
         const npc = entity as NPC;
         if (npc.currentAction) {
-          ctx.fillStyle = '#FFF';
-          ctx.font = '10px Arial';
-          ctx.fillText(npc.currentAction, x + TILE_SIZE / 2, y - 5);
+          const actionType = npc.currentAction.split(':')[0];
+          const icons: Record<string, string> = {
+            'move': '🚶', 'chop': '🪓', 'mine': '⛏️', 'craft': '🔨',
+            'sleep': '😴', 'eat': '🍖', 'work': '💼', 'sell': '💰', 'buy': '🛒'
+          };
+          const icon = icons[actionType] || '❓';
+          
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(icon, x + TILE_SIZE / 2, y - 2);
+        }
+      } else if (entity.type === 'resource') {
+        const res = entity as any;
+        if (res.amount < 5) {
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('⚠️', x + TILE_SIZE, y);
+        }
+      } else if (entity.type === 'building') {
+        const b = entity as any;
+        if (b.inventory && b.inventory.length > 0) {
+           ctx.font = '10px Arial';
+           ctx.textAlign = 'right';
+           ctx.textBaseline = 'top';
+           ctx.fillText('📦', x + TILE_SIZE, y);
         }
       }
     });

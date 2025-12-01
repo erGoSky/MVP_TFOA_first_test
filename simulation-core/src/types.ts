@@ -193,6 +193,10 @@ export interface NPC extends Entity {
   contracts?: Contract[];
   ownedBuildingIds: string[]; // List of owned buildings
   memory: NPCMemory;
+  actionPlan?: {  // NEW: Stores action sequence from GOAP planner
+    actions: string[];
+    currentIndex: number;
+  };
 }
 
 export interface Building extends Entity {

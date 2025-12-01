@@ -55,7 +55,7 @@ export const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
       </div>
       
       <div className="base-card-content">
-        <EntityCard entity={entity} showTitle={false} />
+        <EntityCard entity={entity} showTitle={false} compact={variant === 'hover'} />
       </div>
     </div>
   );
