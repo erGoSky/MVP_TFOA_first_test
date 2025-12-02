@@ -38,7 +38,7 @@ sequenceDiagram
     TS->>TS: Update World State (Tick)
     TS->>TS: Check NPC Status
 
-    rect rgb(200, 220, 240)
+    rect rgba(200, 220, 240, 0.2)
         note right of TS: Decision Phase
         TS->>PY: POST /plan_action_enhanced (State + Needs)
         PY->>PY: Check Active Goals
