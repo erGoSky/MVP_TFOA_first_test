@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import type { NPC } from '../../types/world';
-import './NPCCard.scss';
-import PlanningDebugPanel from '../debug/PlanningDebugPanel';
+import React, { useState } from "react";
+import type { NPC } from "../../types/world";
+import "./NPCCard.scss";
+import PlanningDebugPanel from "../debug/PlanningDebugPanel";
 
 interface NPCCardProps {
   npc: NPC;
@@ -15,10 +15,10 @@ export const NPCCard: React.FC<NPCCardProps> = ({ npc, onClick }) => {
   const health = npc.stats.health;
 
   return (
-    <div className="npc-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+    <div className="npc-card" onClick={onClick} style={{ cursor: onClick ? "pointer" : "default" }}>
       <div className="npc-header">
         <div className="npc-name">{npc.name}</div>
-        <div className="npc-action">{npc.currentAction || 'idle'}</div>
+        <div className="npc-action">{npc.currentAction || "idle"}</div>
       </div>
 
       <div className="stat-group">
@@ -85,9 +85,7 @@ export const NPCCard: React.FC<NPCCardProps> = ({ npc, onClick }) => {
       </div>
 
       <div className="inventory-section">
-        <div className="inventory-title">
-          🎒 Inventory ({npc.inventory.length} items)
-        </div>
+        <div className="inventory-title">🎒 Inventory ({npc.inventory.length} items)</div>
         <div className="inventory-items">
           {npc.inventory.length > 0 ? (
             npc.inventory.map((item, index) => (
@@ -101,26 +99,32 @@ export const NPCCard: React.FC<NPCCardProps> = ({ npc, onClick }) => {
         </div>
       </div>
 
-      <div className="debug-section" style={{ marginTop: '10px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
-        <button 
-            onClick={(e) => { e.stopPropagation(); setShowDebug(!showDebug); }}
-            style={{ 
-                background: 'none', 
-                border: '1px solid #ccc', 
-                borderRadius: '4px', 
-                cursor: 'pointer',
-                padding: '4px 8px',
-                fontSize: '0.8rem',
-                width: '100%'
-            }}
+      <div
+        className="debug-section"
+        style={{ marginTop: "10px", borderTop: "1px solid #eee", paddingTop: "10px" }}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDebug(!showDebug);
+          }}
+          style={{
+            background: "none",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            cursor: "pointer",
+            padding: "4px 8px",
+            fontSize: "0.8rem",
+            width: "100%",
+          }}
         >
-            {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
+          {showDebug ? "Hide Debug Info" : "Show Debug Info"}
         </button>
-        
+
         {showDebug && (
-            <div onClick={(e) => e.stopPropagation()}>
-                <PlanningDebugPanel npcId={npc.id} />
-            </div>
+          <div onClick={(e) => e.stopPropagation()}>
+            <PlanningDebugPanel npcId={npc.id} />
+          </div>
         )}
       </div>
     </div>

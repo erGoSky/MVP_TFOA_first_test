@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { SimulationStatus } from '../types/world';
-import { api } from '../services/api';
+import { useState, useEffect, useCallback } from "react";
+import type { SimulationStatus } from "../types/world";
+import { api } from "../services/api";
 
 export function useSimulation() {
   const [status, setStatus] = useState<SimulationStatus>({ paused: true, speed: 1 });
@@ -11,7 +11,7 @@ export function useSimulation() {
       const newStatus = await api.getSimulationStatus();
       setStatus(newStatus);
     } catch (err) {
-      console.error('Failed to fetch simulation status:', err);
+      console.error("Failed to fetch simulation status:", err);
     }
   }, []);
 

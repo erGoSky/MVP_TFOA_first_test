@@ -2,15 +2,15 @@
 
 export const ITEM_DURABILITY: Record<string, number> = {
   // Tools
-  'wooden_pickaxe': 50,
-  'wooden_axe': 50,
-  'stone_pickaxe': 100,
-  'iron_pickaxe': 250,
-  'iron_sword': 200,
-  'iron_armor': 500,
-  
+  wooden_pickaxe: 50,
+  wooden_axe: 50,
+  stone_pickaxe: 100,
+  iron_pickaxe: 250,
+  iron_sword: 200,
+  iron_armor: 500,
+
   // Other items
-  'water_flask': 10, // Reusable?
+  water_flask: 10, // Reusable?
 };
 
 export const TOOL_DEGRADATION = {

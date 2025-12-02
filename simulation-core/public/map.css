@@ -209,7 +209,7 @@ canvas {
 
 .pinned-card {
   background: rgba(30, 60, 114, 0.98);
-  border: 2px solid #FFD700;
+  border: 2px solid #ffd700;
   border-radius: 10px;
   margin-bottom: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -253,7 +253,7 @@ canvas {
 .pinned-card-title-text {
   font-size: 1.1em;
   font-weight: bold;
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .pinned-card-close {
@@ -279,7 +279,9 @@ canvas {
   padding: 15px;
   max-height: 500px;
   overflow-y: auto;
-  transition: max-height 0.3s ease, padding 0.3s ease;
+  transition:
+    max-height 0.3s ease,
+    padding 0.3s ease;
 }
 
 .hover-card-title {

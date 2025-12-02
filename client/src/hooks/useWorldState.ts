@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { WorldState } from '../types/world';
-import { api } from '../services/api';
+import { useState, useEffect, useCallback } from "react";
+import type { WorldState } from "../types/world";
+import { api } from "../services/api";
 
 export function useWorldState(pollingInterval = 1000) {
   const [worldState, setWorldState] = useState<WorldState | null>(null);
@@ -13,7 +13,7 @@ export function useWorldState(pollingInterval = 1000) {
       setWorldState(state);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setError(err instanceof Error ? err : new Error("Unknown error"));
     } finally {
       setLoading(false);
     }

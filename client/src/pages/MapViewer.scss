@@ -1,5 +1,5 @@
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
 
 .map-viewer-page {
   // Allow map to be background
@@ -36,7 +36,8 @@
     padding-right: $spacing-xs; // Add a little padding for visual separation
   }
 
-  .loading-screen, .error-screen {
+  .loading-screen,
+  .error-screen {
     @include flex-center;
     height: 100vh;
     width: 100vw;

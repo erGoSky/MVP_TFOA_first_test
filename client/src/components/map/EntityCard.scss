@@ -1,5 +1,5 @@
-@use '../../styles/variables' as *;
-@use '../../styles/mixins' as *;
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
 
 .entity-card-content {
   .card-header-title {
@@ -33,8 +33,8 @@
     color: white;
     font-size: 0.8em;
     font-weight: bold;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .stat-bar {
@@ -52,11 +52,17 @@
     font-weight: bold;
     transition: width 0.3s ease;
     color: white;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
 
-    &.hunger { background: $gradient-stat-hunger; }
-    &.energy { background: $gradient-stat-energy; }
-    &.health { background: $gradient-stat-health; }
+    &.hunger {
+      background: $gradient-stat-hunger;
+    }
+    &.energy {
+      background: $gradient-stat-energy;
+    }
+    &.health {
+      background: $gradient-stat-health;
+    }
   }
 
   .inventory-items {
@@ -75,7 +81,7 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    
+
     &.empty {
       opacity: 0.5;
       font-style: italic;
@@ -84,17 +90,21 @@
     .durability-bar {
       width: 100%;
       height: 3px;
-      background: rgba(0,0,0,0.3);
+      background: rgba(0, 0, 0, 0.3);
       border-radius: 2px;
       overflow: hidden;
-      
+
       .fill {
         height: 100%;
-        background: #4CAF50; // Green
+        background: #4caf50; // Green
         transition: width 0.3s ease;
-        
-        &.low { background: #FF5722; } // Red/Orange
-        &.medium { background: #FFC107; } // Yellow
+
+        &.low {
+          background: #ff5722;
+        } // Red/Orange
+        &.medium {
+          background: #ffc107;
+        } // Yellow
       }
     }
   }
@@ -108,6 +118,6 @@
     font-size: 0.85em;
     font-weight: 600;
     color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 }

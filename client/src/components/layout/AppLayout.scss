@@ -1,4 +1,4 @@
-@use '../../styles/variables' as *;
+@use "../../styles/variables" as *;
 
 .app-layout {
   min-height: 100vh;
@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   pointer-events: none; // Allow clicks to pass through to map
-  
+
   // Re-enable pointer events for actual content children
   > * {
     pointer-events: auto;

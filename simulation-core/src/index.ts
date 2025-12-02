@@ -1,9 +1,16 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import path from 'path';
-import { WorldManager } from './world';
-import { WorldGenerator } from './world-generator';
-import { RESOURCE_TYPES, RESOURCE_METADATA, BIOME_METADATA, CONTAINER_TYPES, WORKSTATION_TYPES, WORKSTATION_METADATA } from './constants/entities';
+import express from "express";
+import dotenv from "dotenv";
+import path from "path";
+import { WorldManager } from "./world";
+import { WorldGenerator } from "./world-generator";
+import {
+  RESOURCE_TYPES,
+  RESOURCE_METADATA,
+  BIOME_METADATA,
+  CONTAINER_TYPES,
+  WORKSTATION_TYPES,
+  WORKSTATION_METADATA,
+} from "./constants/entities";
 
 dotenv.config();
 
@@ -26,7 +33,7 @@ function startSimulation() {
   if (simulationInterval) {
     clearInterval(simulationInterval);
   }
-  
+
   const tickRate = BASE_TICK_RATE / tickRateMultiplier;
   simulationInterval = setInterval(() => {
     if (!simulationPaused) {
@@ -40,21 +47,21 @@ startSimulation();
 
 app.use(express.json());
 // Use path.join to correctly resolve the public directory
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, "../public")));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-app.get('/map', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/map.html'));
+app.get("/map", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/map.html"));
 });
 
-app.get('/state', (req, res) => {
+app.get("/state", (req, res) => {
   res.json(world.getState());
 });
 
-app.get('/meta/entities', (req, res) => {
+app.get("/meta/entities", (req, res) => {
   res.json({
     resourceTypes: RESOURCE_TYPES,
     resourceMetadata: RESOURCE_METADATA,
@@ -66,37 +73,37 @@ app.get('/meta/entities', (req, res) => {
 });
 
 // Simulation control endpoints
-app.post('/simulation/pause', (req, res) => {
+app.post("/simulation/pause", (req, res) => {
   simulationPaused = true;
   res.json({ paused: simulationPaused, speed: tickRateMultiplier });
 });
 
-app.post('/simulation/play', (req, res) => {
+app.post("/simulation/play", (req, res) => {
   simulationPaused = false;
   res.json({ paused: simulationPaused, speed: tickRateMultiplier });
 });
 
-app.post('/simulation/speed', (req, res) => {
+app.post("/simulation/speed", (req, res) => {
   const { speed } = req.body;
   if ([1, 2, 4, 8, 16].includes(speed)) {
     tickRateMultiplier = speed;
     startSimulation(); // Restart with new tick rate
     res.json({ paused: simulationPaused, speed: tickRateMultiplier });
   } else {
-    res.status(400).json({ error: 'Invalid speed. Must be 1, 2, 4, 8, or 16' });
+    res.status(400).json({ error: "Invalid speed. Must be 1, 2, 4, 8, or 16" });
   }
 });
 
-app.get('/simulation/status', (req, res) => {
+app.get("/simulation/status", (req, res) => {
   res.json({ paused: simulationPaused, speed: tickRateMultiplier });
 });
 
 // Save/Load endpoints
-app.post('/save', async (req, res) => {
+app.post("/save", async (req, res) => {
   try {
     const { filename } = req.body;
     if (!filename) {
-      return res.status(400).json({ error: 'Filename is required' });
+      return res.status(400).json({ error: "Filename is required" });
     }
     await world.saveState(filename);
     res.json({ success: true, message: `World saved as ${filename}` });
@@ -105,11 +112,11 @@ app.post('/save', async (req, res) => {
   }
 });
 
-app.post('/load', async (req, res) => {
+app.post("/load", async (req, res) => {
   try {
     const { filename } = req.body;
     if (!filename) {
-      return res.status(400).json({ error: 'Filename is required' });
+      return res.status(400).json({ error: "Filename is required" });
     }
     await world.loadState(filename);
     res.json({ success: true, message: `World loaded from ${filename}` });
@@ -118,7 +125,7 @@ app.post('/load', async (req, res) => {
   }
 });
 
-app.get('/saves', async (req, res) => {
+app.get("/saves", async (req, res) => {
   try {
     const saves = await world.getSavesList();
     res.json({ saves });
@@ -127,7 +134,7 @@ app.get('/saves', async (req, res) => {
   }
 });
 
-app.delete('/save/:filename', async (req, res) => {
+app.delete("/save/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
     await world.deleteSave(filename);
@@ -138,46 +145,46 @@ app.delete('/save/:filename', async (req, res) => {
 });
 
 // World Management Endpoints
-app.post('/world/generate', (req, res) => {
+app.post("/world/generate", (req, res) => {
   try {
     const params = req.body;
     generator.generate(params);
-    res.json({ success: true, message: 'World generated' });
+    res.json({ success: true, message: "World generated" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/world/reset', (req, res) => {
+app.post("/world/reset", (req, res) => {
   try {
     world.reset();
-    res.json({ success: true, message: 'World reset' });
+    res.json({ success: true, message: "World reset" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/entity', (req, res) => {
+app.post("/entity", (req, res) => {
   try {
     const { type, ...data } = req.body;
-    
-    if (type === 'npc') {
+
+    if (type === "npc") {
       world.createNPC(data.id, data.name, data.position, data.skills);
-    } else if (type === 'resource') {
+    } else if (type === "resource") {
       world.createResource(data.id, data.resourceType, data.position, data.amount, data.properties);
-    } else if (type === 'building') {
+    } else if (type === "building") {
       world.createBuilding(data.id, data.buildingType, data.position);
     } else {
-      return res.status(400).json({ error: 'Invalid entity type' });
+      return res.status(400).json({ error: "Invalid entity type" });
     }
-    
-    res.json({ success: true, message: 'Entity created' });
+
+    res.json({ success: true, message: "Entity created" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.delete('/entity/:id', (req, res) => {
+app.delete("/entity/:id", (req, res) => {
   try {
     const { id } = req.params;
     world.removeEntity(id);
@@ -187,7 +194,7 @@ app.delete('/entity/:id', (req, res) => {
   }
 });
 
-app.patch('/entity/:id', (req, res) => {
+app.patch("/entity/:id", (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;

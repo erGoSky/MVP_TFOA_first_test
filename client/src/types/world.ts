@@ -45,13 +45,13 @@ export interface Container {
 
 export interface Entity {
   id: string;
-  type: 'npc' | 'building' | 'resource';
+  type: "npc" | "building" | "resource";
   position: Vector2;
   container?: Container;
 }
 
 export interface NPC extends Entity {
-  type: 'npc';
+  type: "npc";
   name: string;
   needs: Needs;
   stats: Stats;
@@ -62,7 +62,7 @@ export interface NPC extends Entity {
 }
 
 export interface Resource extends Entity {
-  type: 'resource';
+  type: "resource";
   resourceType: string;
   amount: number;
   properties: {
@@ -73,13 +73,13 @@ export interface Resource extends Entity {
 }
 
 export interface Building extends Entity {
-  type: 'building';
+  type: "building";
   buildingType: string;
   gold: number;
   inventory: InventoryItem[];
 }
 
-export type BiomeType = 'forest' | 'plains' | 'desert' | 'mountain' | 'swamp' | 'water';
+export type BiomeType = "forest" | "plains" | "desert" | "mountain" | "swamp" | "water";
 
 export interface Tile {
   x: number;

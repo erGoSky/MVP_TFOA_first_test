@@ -1,6 +1,6 @@
-import React from 'react';
-import type { Entity, NPC, Resource, Building } from '../../types/world';
-import './EntityCard.scss';
+import React from "react";
+import type { Entity, NPC, Resource, Building } from "../../types/world";
+import "./EntityCard.scss";
 
 interface EntityCardProps {
   entity: Entity;
@@ -8,24 +8,30 @@ interface EntityCardProps {
   compact?: boolean;
 }
 
-export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true, compact = false }) => {
-  const getActionBadge = (action: string | null): { icon: string; label: string; color: string } => {
-    if (!action) return { icon: '💤', label: 'Idle', color: '#888' };
-    
-    const actionType = action.split(':')[0];
+export const EntityCard: React.FC<EntityCardProps> = ({
+  entity,
+  showTitle = true,
+  compact = false,
+}) => {
+  const getActionBadge = (
+    action: string | null
+  ): { icon: string; label: string; color: string } => {
+    if (!action) return { icon: "💤", label: "Idle", color: "#888" };
+
+    const actionType = action.split(":")[0];
     const badges: Record<string, { icon: string; label: string; color: string }> = {
-      'move': { icon: '🚶', label: 'Moving', color: '#4CAF50' },
-      'chop': { icon: '🪓', label: 'Chopping', color: '#8B4513' },
-      'mine': { icon: '⛏️', label: 'Mining', color: '#757575' },
-      'craft': { icon: '🔨', label: 'Crafting', color: '#FF9800' },
-      'sleep': { icon: '😴', label: 'Sleeping', color: '#3F51B5' },
-      'eat': { icon: '🍖', label: 'Eating', color: '#E91E63' },
-      'work': { icon: '💼', label: 'Working', color: '#009688' },
-      'sell': { icon: '💰', label: 'Selling', color: '#FFC107' },
-      'buy': { icon: '🛒', label: 'Buying', color: '#2196F3' },
+      move: { icon: "🚶", label: "Moving", color: "#4CAF50" },
+      chop: { icon: "🪓", label: "Chopping", color: "#8B4513" },
+      mine: { icon: "⛏️", label: "Mining", color: "#757575" },
+      craft: { icon: "🔨", label: "Crafting", color: "#FF9800" },
+      sleep: { icon: "😴", label: "Sleeping", color: "#3F51B5" },
+      eat: { icon: "🍖", label: "Eating", color: "#E91E63" },
+      work: { icon: "💼", label: "Working", color: "#009688" },
+      sell: { icon: "💰", label: "Selling", color: "#FFC107" },
+      buy: { icon: "🛒", label: "Buying", color: "#2196F3" },
     };
-    
-    return badges[actionType] || { icon: '❓', label: action, color: '#888' };
+
+    return badges[actionType] || { icon: "❓", label: action, color: "#888" };
   };
 
   const renderNPC = (npc: NPC) => {
@@ -45,21 +51,27 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
             </span>
           </div>
         </div>
-        
+
         {!compact && (
           <>
             <div className="card-section">
               <div className="card-label">🍖 Hunger: {hunger.toFixed(0)}%</div>
               <div className="stat-bar">
-                <div className="stat-fill hunger" style={{ width: `${hunger}%` }}>{hunger.toFixed(0)}%</div>
+                <div className="stat-fill hunger" style={{ width: `${hunger}%` }}>
+                  {hunger.toFixed(0)}%
+                </div>
               </div>
               <div className="card-label">⚡ Energy: {energy.toFixed(0)}%</div>
               <div className="stat-bar">
-                <div className="stat-fill energy" style={{ width: `${energy}%` }}>{energy.toFixed(0)}%</div>
+                <div className="stat-fill energy" style={{ width: `${energy}%` }}>
+                  {energy.toFixed(0)}%
+                </div>
               </div>
               <div className="card-label">❤️ Health: {health}%</div>
               <div className="stat-bar">
-                <div className="stat-fill health" style={{ width: `${health}%` }}>{health}%</div>
+                <div className="stat-fill health" style={{ width: `${health}%` }}>
+                  {health}%
+                </div>
               </div>
             </div>
             <div className="card-section">
@@ -83,22 +95,24 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
                 const durability = item.properties?.durability;
                 const maxDurability = item.properties?.maxDurability;
                 let durabilityPct = 0;
-                let durabilityClass = '';
-                
+                let durabilityClass = "";
+
                 if (durability !== undefined && maxDurability) {
                   durabilityPct = (durability / maxDurability) * 100;
-                  if (durabilityPct < 30) durabilityClass = 'low';
-                  else if (durabilityPct < 70) durabilityClass = 'medium';
+                  if (durabilityPct < 30) durabilityClass = "low";
+                  else if (durabilityPct < 70) durabilityClass = "medium";
                 }
 
                 return (
                   <div key={i} className="inventory-item">
-                    <span>{item.type} x{item.quantity}</span>
+                    <span>
+                      {item.type} x{item.quantity}
+                    </span>
                     {durability !== undefined && (
                       <div className="durability-bar">
-                        <div 
-                          className={`fill ${durabilityClass}`} 
-                          style={{ width: `${durabilityPct}%` }} 
+                        <div
+                          className={`fill ${durabilityClass}`}
+                          style={{ width: `${durabilityPct}%` }}
                         />
                       </div>
                     )}
@@ -118,15 +132,15 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
   };
 
   const renderResource = (resource: Resource) => {
-    let statusColor = '#4CAF50'; // Green
-    let statusLabel = 'Abundant';
-    
+    let statusColor = "#4CAF50"; // Green
+    let statusLabel = "Abundant";
+
     if (resource.amount < 5) {
-      statusColor = '#F44336'; // Red
-      statusLabel = 'Depleted';
+      statusColor = "#F44336"; // Red
+      statusLabel = "Depleted";
     } else if (resource.amount < 10) {
-      statusColor = '#FFC107'; // Amber
-      statusLabel = 'Low';
+      statusColor = "#FFC107"; // Amber
+      statusLabel = "Low";
     }
 
     return (
@@ -155,7 +169,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
 
   const renderBuilding = (building: Building) => {
     const itemCount = building.inventory.reduce((sum, item) => sum + item.quantity, 0);
-    
+
     return (
       <>
         {showTitle && <div className="card-header-title">🏠 {building.buildingType}</div>}
@@ -163,11 +177,11 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
           <div className="card-label">Status:</div>
           <div className="card-value">
             {itemCount > 0 ? (
-              <span className="status-badge" style={{ backgroundColor: '#2196F3' }}>
+              <span className="status-badge" style={{ backgroundColor: "#2196F3" }}>
                 📦 {itemCount} Items Stored
               </span>
             ) : (
-              <span className="status-badge" style={{ backgroundColor: '#9E9E9E' }}>
+              <span className="status-badge" style={{ backgroundColor: "#9E9E9E" }}>
                 Empty
               </span>
             )}
@@ -184,7 +198,9 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
           <div className="inventory-items">
             {building.inventory.length > 0 ? (
               building.inventory.slice(0, compact ? 4 : undefined).map((item, i) => (
-                <div key={i} className="inventory-item">{item.type} x{item.quantity}</div>
+                <div key={i} className="inventory-item">
+                  {item.type} x{item.quantity}
+                </div>
               ))
             ) : (
               <div className="inventory-item empty">Empty</div>
@@ -200,10 +216,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ entity, showTitle = true
 
   return (
     <div className="entity-card-content">
-      {entity.type === 'npc' && renderNPC(entity as NPC)}
-      {entity.type === 'resource' && renderResource(entity as Resource)}
-      {entity.type === 'building' && renderBuilding(entity as Building)}
-      
+      {entity.type === "npc" && renderNPC(entity as NPC)}
+      {entity.type === "resource" && renderResource(entity as Resource)}
+      {entity.type === "building" && renderBuilding(entity as Building)}
+
       {!compact && (
         <div className="card-section">
           <div className="card-label">📍 Position:</div>

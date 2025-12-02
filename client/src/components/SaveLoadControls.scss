@@ -46,14 +46,14 @@
 
     &.success {
       background: rgba(76, 175, 80, 0.2);
-      color: #4CAF50;
-      border: 1px solid #4CAF50;
+      color: #4caf50;
+      border: 1px solid #4caf50;
     }
 
     &.error {
       background: rgba(244, 67, 54, 0.2);
-      color: #F44336;
-      border: 1px solid #F44336;
+      color: #f44336;
+      border: 1px solid #f44336;
     }
   }
 
@@ -109,7 +109,7 @@
         justify-content: center;
 
         &:hover {
-          color: #F44336;
+          color: #f44336;
         }
       }
     }
@@ -135,7 +135,8 @@
         }
       }
 
-      .existing-saves, .save-list {
+      .existing-saves,
+      .save-list {
         h4 {
           margin: 15px 0 10px 0;
           color: #4ecdc4;
@@ -249,8 +250,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {

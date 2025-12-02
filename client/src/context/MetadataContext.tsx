@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { EntitiesMetadata } from '../types/metadata';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import type { EntitiesMetadata } from "../types/metadata";
 
 interface MetadataContextType extends EntitiesMetadata {
   loading: boolean;
@@ -16,8 +16,8 @@ export const MetadataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch('/meta/entities'); // Proxy handles localhost:3000
-        if (!response.ok) throw new Error('Failed to fetch metadata');
+        const response = await fetch("/meta/entities"); // Proxy handles localhost:3000
+        if (!response.ok) throw new Error("Failed to fetch metadata");
         const data = await response.json();
         setMetadata(data);
       } catch (err: any) {
@@ -38,20 +38,16 @@ export const MetadataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     workstationTypes: metadata?.workstationTypes || {},
     workstationMetadata: metadata?.workstationMetadata || {},
     loading,
-    error
+    error,
   };
 
-  return (
-    <MetadataContext.Provider value={value}>
-      {children}
-    </MetadataContext.Provider>
-  );
+  return <MetadataContext.Provider value={value}>{children}</MetadataContext.Provider>;
 };
 
 export const useMetadata = () => {
   const context = useContext(MetadataContext);
   if (context === undefined) {
-    throw new Error('useMetadata must be used within a MetadataProvider');
+    throw new Error("useMetadata must be used within a MetadataProvider");
   }
   return context;
 };

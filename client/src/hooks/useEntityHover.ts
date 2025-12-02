@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { Entity } from '../types/world';
+import { useState, useCallback, useEffect } from "react";
+import type { Entity } from "../types/world";
 
 export function useEntityHover() {
   const [hoveredEntities, setHoveredEntities] = useState<Entity[]>([]);
@@ -9,11 +9,11 @@ export function useEntityHover() {
   const handleHover = useCallback((entities: Entity[], x: number, y: number) => {
     // Only update if entities changed to avoid flickering
     // Simple check based on IDs
-    setHoveredEntities(prev => {
-      const prevIds = prev.map(e => e.id).join(',');
-      const newIds = entities.map(e => e.id).join(',');
+    setHoveredEntities((prev) => {
+      const prevIds = prev.map((e) => e.id).join(",");
+      const newIds = entities.map((e) => e.id).join(",");
       if (prevIds === newIds) return prev;
-      
+
       // Reset index when entities change
       setHoverIndex(0);
       return entities;
@@ -26,16 +26,19 @@ export function useEntityHover() {
     }
   }, []);
 
-  const cycleHover = useCallback((direction: number) => {
-    if (hoveredEntities.length <= 1) return;
-    
-    setHoverIndex(prev => {
-      const next = prev + direction;
-      if (next >= hoveredEntities.length) return 0;
-      if (next < 0) return hoveredEntities.length - 1;
-      return next;
-    });
-  }, [hoveredEntities.length]);
+  const cycleHover = useCallback(
+    (direction: number) => {
+      if (hoveredEntities.length <= 1) return;
+
+      setHoverIndex((prev) => {
+        const next = prev + direction;
+        if (next >= hoveredEntities.length) return 0;
+        if (next < 0) return hoveredEntities.length - 1;
+        return next;
+      });
+    },
+    [hoveredEntities.length]
+  );
 
   // Scroll wheel handler for cycling
   useEffect(() => {
@@ -46,8 +49,8 @@ export function useEntityHover() {
       }
     };
 
-    window.addEventListener('wheel', handleWheel);
-    return () => window.removeEventListener('wheel', handleWheel);
+    window.addEventListener("wheel", handleWheel);
+    return () => window.removeEventListener("wheel", handleWheel);
   }, [hoveredEntities.length, cycleHover]);
 
   return {
@@ -55,6 +58,6 @@ export function useEntityHover() {
     hoverIndex,
     mousePos,
     handleHover,
-    cycleHover
+    cycleHover,
   };
 }

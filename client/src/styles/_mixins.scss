@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 @mixin glassmorphism {
   background: $bg-panel;
@@ -21,7 +21,7 @@
 
 @mixin card-hover {
   transition: transform 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-5px);
   }

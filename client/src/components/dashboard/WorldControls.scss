@@ -1,6 +1,6 @@
-@use '../../styles/variables' as *;
-@use '../../styles/mixins' as *;
-@use 'sass:color';
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "sass:color";
 
 .world-controls {
   background: rgba(0, 0, 0, 0.3);
@@ -33,20 +33,20 @@
     border: 1px solid transparent;
     flex: 1;
     padding: $spacing-sm $spacing-md;
-    
+
     &.generate-btn {
       background: rgba($primary-color, 0.2);
       border-color: $primary-color;
-      
+
       &:hover:not(:disabled) {
         background: rgba($primary-color, 0.4);
       }
     }
-    
+
     &.reset-btn {
       background: rgba($danger-color, 0.2);
       border-color: $danger-color;
-      
+
       &:hover:not(:disabled) {
         background: rgba($danger-color, 0.4);
       }
@@ -76,6 +76,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

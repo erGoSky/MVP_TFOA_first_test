@@ -1,13 +1,13 @@
-import { Personality, PersonalityTraits, NPCContext, NPCContextState } from '../types';
-import { PERSONALITY_ARCHETYPES } from './archetypes';
+import { Personality, PersonalityTraits, NPCContext, NPCContextState } from "../types";
+import { PERSONALITY_ARCHETYPES } from "./archetypes";
 
 /**
  * Utility weights for decision-making
  */
 export interface UtilityWeights {
-  needs: number;      // Survival actions (eat, sleep)
-  economic: number;   // Wealth-building (work, trade)
-  social: number;     // Interactions (chat, cooperate)
+  needs: number; // Survival actions (eat, sleep)
+  economic: number; // Wealth-building (work, trade)
+  social: number; // Interactions (chat, cooperate)
 }
 
 /**
@@ -37,7 +37,7 @@ export class PersonalityGenerator {
       sociability: 0,
       riskTolerance: 0,
       planfulness: 0,
-      curiosity: 0
+      curiosity: 0,
     };
 
     // Add ±10% variation to each trait
@@ -49,7 +49,7 @@ export class PersonalityGenerator {
 
     return {
       traits,
-      archetype
+      archetype,
     };
   }
 
@@ -63,12 +63,12 @@ export class PersonalityGenerator {
       sociability: Math.random(),
       riskTolerance: Math.random(),
       planfulness: Math.random(),
-      curiosity: Math.random()
+      curiosity: Math.random(),
     };
 
     return {
       traits,
-      archetype: 'random'
+      archetype: "random",
     };
   }
 
@@ -85,14 +85,14 @@ export class PersonalityGenerator {
     let social = 0.2;
 
     // Personality modifiers (60% human-like)
-    economic += traits.greed * 0.3;          // Greedy NPCs focus on money
-    needs -= traits.greed * 0.2;             // At expense of needs
+    economic += traits.greed * 0.3; // Greedy NPCs focus on money
+    needs -= traits.greed * 0.2; // At expense of needs
 
-    social += traits.sociability * 0.3;      // Social NPCs seek interaction
+    social += traits.sociability * 0.3; // Social NPCs seek interaction
     needs -= traits.sociability * 0.1;
 
-    economic -= traits.laziness * 0.2;       // Lazy NPCs avoid work
-    needs += traits.laziness * 0.1;          // Prefer rest
+    economic -= traits.laziness * 0.2; // Lazy NPCs avoid work
+    needs += traits.laziness * 0.1; // Prefer rest
 
     // Context overrides (40% optimal - survival trumps personality)
     if (context.state === NPCContextState.DESPERATE) {
@@ -115,7 +115,7 @@ export class PersonalityGenerator {
     return {
       needs: needs / total,
       economic: economic / total,
-      social: social / total
+      social: social / total,
     };
   }
 
@@ -126,26 +126,24 @@ export class PersonalityGenerator {
     const traits = personality.traits;
     const descriptions: string[] = [];
 
-    if (traits.greed > 0.7) descriptions.push('greedy');
-    else if (traits.greed < 0.3) descriptions.push('altruistic');
+    if (traits.greed > 0.7) descriptions.push("greedy");
+    else if (traits.greed < 0.3) descriptions.push("altruistic");
 
-    if (traits.laziness > 0.7) descriptions.push('lazy');
-    else if (traits.laziness < 0.3) descriptions.push('hardworking');
+    if (traits.laziness > 0.7) descriptions.push("lazy");
+    else if (traits.laziness < 0.3) descriptions.push("hardworking");
 
-    if (traits.sociability > 0.7) descriptions.push('social');
-    else if (traits.sociability < 0.3) descriptions.push('reclusive');
+    if (traits.sociability > 0.7) descriptions.push("social");
+    else if (traits.sociability < 0.3) descriptions.push("reclusive");
 
-    if (traits.riskTolerance > 0.7) descriptions.push('risk-taking');
-    else if (traits.riskTolerance < 0.3) descriptions.push('cautious');
+    if (traits.riskTolerance > 0.7) descriptions.push("risk-taking");
+    else if (traits.riskTolerance < 0.3) descriptions.push("cautious");
 
-    if (traits.planfulness > 0.7) descriptions.push('strategic');
-    else if (traits.planfulness < 0.3) descriptions.push('spontaneous');
+    if (traits.planfulness > 0.7) descriptions.push("strategic");
+    else if (traits.planfulness < 0.3) descriptions.push("spontaneous");
 
-    if (traits.curiosity > 0.7) descriptions.push('curious');
-    else if (traits.curiosity < 0.3) descriptions.push('routine-focused');
+    if (traits.curiosity > 0.7) descriptions.push("curious");
+    else if (traits.curiosity < 0.3) descriptions.push("routine-focused");
 
-    return descriptions.length > 0 
-      ? descriptions.join(', ') 
-      : 'balanced';
+    return descriptions.length > 0 ? descriptions.join(", ") : "balanced";
   }
 }

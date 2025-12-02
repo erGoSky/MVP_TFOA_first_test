@@ -1,4 +1,4 @@
-@use '../../styles/variables' as *;
+@use "../../styles/variables" as *;
 
 .tooltip-wrapper {
   position: relative;
@@ -16,9 +16,9 @@
   z-index: 1000;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  
+
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     border: 6px solid transparent;
   }
@@ -27,7 +27,7 @@
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    
+
     &::before {
       top: 100%;
       left: 50%;
@@ -40,7 +40,7 @@
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    
+
     &::before {
       bottom: 100%;
       left: 50%;
@@ -53,7 +53,7 @@
     right: calc(100% + 8px);
     top: 50%;
     transform: translateY(-50%);
-    
+
     &::before {
       left: 100%;
       top: 50%;
@@ -66,7 +66,7 @@
     left: calc(100% + 8px);
     top: 50%;
     transform: translateY(-50%);
-    
+
     &::before {
       right: 100%;
       top: 50%;

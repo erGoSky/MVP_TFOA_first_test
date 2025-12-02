@@ -1,6 +1,6 @@
-import React from 'react';
-import type { WorldState } from '../../types/world';
-import './StatsHeader.scss';
+import React from "react";
+import type { WorldState } from "../../types/world";
+import "./StatsHeader.scss";
 
 interface StatsHeaderProps {
   worldState: WorldState | null;

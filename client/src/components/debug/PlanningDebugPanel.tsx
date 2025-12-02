@@ -78,10 +78,10 @@ const PlanningDebugPanel: React.FC<PlanningDebugPanelProps> = ({ npcId }) => {
         ) : (
           <ul className="plan-history">
             {planHistory.slice(0, 5).map((entry, idx) => (
-              <li key={idx} className={`plan-entry ${entry.success ? 'success' : 'failed'}`}>
+              <li key={idx} className={`plan-entry ${entry.success ? "success" : "failed"}`}>
                 <div className="plan-header">
-                  <span className={`status-badge ${entry.success ? 'success' : 'failed'}`}>
-                    {entry.success ? '✓' : '✗'}
+                  <span className={`status-badge ${entry.success ? "success" : "failed"}`}>
+                    {entry.success ? "✓" : "✗"}
                   </span>
                   <span className="plan-goal">{entry.goal}</span>
                   <span className="plan-duration">{entry.duration.toFixed(0)}ms</span>
@@ -89,13 +89,13 @@ const PlanningDebugPanel: React.FC<PlanningDebugPanelProps> = ({ npcId }) => {
                 {entry.success && entry.plan && (
                   <div className="plan-steps">
                     {entry.plan.map((step, i) => (
-                      <span key={i} className="plan-step">{step}</span>
+                      <span key={i} className="plan-step">
+                        {step}
+                      </span>
                     ))}
                   </div>
                 )}
-                {!entry.success && entry.error && (
-                  <div className="plan-error">{entry.error}</div>
-                )}
+                {!entry.success && entry.error && <div className="plan-error">{entry.error}</div>}
               </li>
             ))}
           </ul>

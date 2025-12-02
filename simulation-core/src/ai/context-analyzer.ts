@@ -1,4 +1,4 @@
-import { NPC, NPCContext, NPCContextState } from '../types';
+import { NPC, NPCContext, NPCContextState } from "../types";
 
 /**
  * Analyzes NPC state to determine context for decision-making
@@ -59,16 +59,16 @@ export class ContextAnalyzer {
     const urgent: string[] = [];
 
     if (npc.needs.hunger > 0.7) {
-      urgent.push('hunger');
+      urgent.push("hunger");
     }
     if (npc.needs.energy < 0.3) {
-      urgent.push('energy');
+      urgent.push("energy");
     }
     if (npc.stats.health < 50) {
-      urgent.push('health');
+      urgent.push("health");
     }
     if (npc.stats.money < 10) {
-      urgent.push('money');
+      urgent.push("money");
     }
 
     return urgent;
@@ -82,28 +82,28 @@ export class ContextAnalyzer {
 
     // Has money to invest
     if (npc.stats.money >= 100) {
-      opportunities.push('can_build_house');
-      opportunities.push('can_invest');
+      opportunities.push("can_build_house");
+      opportunities.push("can_invest");
     }
 
     // Has surplus resources
     const totalInventory = npc.inventory.reduce((sum, item) => sum + item.quantity, 0);
     if (totalInventory > 10) {
-      opportunities.push('can_trade_surplus');
+      opportunities.push("can_trade_surplus");
     }
 
     // High skills
     if (npc.skills.crafting > 50) {
-      opportunities.push('can_craft_advanced');
+      opportunities.push("can_craft_advanced");
     }
     if (npc.skills.trading > 50) {
-      opportunities.push('can_negotiate_better');
+      opportunities.push("can_negotiate_better");
     }
 
     // Well-rested and healthy
     if (npc.needs.energy > 0.8 && npc.stats.health > 80) {
-      opportunities.push('can_explore');
-      opportunities.push('can_work_hard');
+      opportunities.push("can_explore");
+      opportunities.push("can_work_hard");
     }
 
     return opportunities;

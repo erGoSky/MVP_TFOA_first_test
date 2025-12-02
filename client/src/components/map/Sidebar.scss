@@ -1,5 +1,5 @@
-@use '../../styles/variables' as *;
-@use '../../styles/mixins' as *;
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
 
 .sidebar {
   width: 350px;
@@ -16,7 +16,7 @@
     @include glassmorphism;
     padding: $spacing-sm $spacing-md;
     border-radius: $border-radius-md;
-    
+
     h3 {
       margin: 0;
       font-size: 1.1em;
@@ -28,7 +28,8 @@
       gap: $spacing-sm;
     }
 
-    .close-btn, .mode-btn {
+    .close-btn,
+    .mode-btn {
       background: none;
       border: none;
       color: $text-light;
@@ -82,11 +83,11 @@
       @include flex-between;
       margin-bottom: 8px;
       font-size: 0.9em;
-      
+
       span:first-child {
         opacity: 0.8;
       }
-      
+
       span:last-child {
         font-weight: bold;
       }

@@ -1,7 +1,7 @@
-import React from 'react';
-import type { Entity } from '../../types/world';
-import { BaseEntityCard } from './BaseEntityCard';
-import './PinnedCard.scss';
+import React from "react";
+import type { Entity } from "../../types/world";
+import { BaseEntityCard } from "./BaseEntityCard";
+import "./PinnedCard.scss";
 
 interface PinnedCardProps {
   entity: Entity;

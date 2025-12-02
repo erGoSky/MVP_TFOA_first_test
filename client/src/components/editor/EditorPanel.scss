@@ -1,6 +1,6 @@
-@use '../../styles/variables' as *;
-@use '../../styles/mixins' as *;
-@use 'sass:color';
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "sass:color";
 
 .editor-panel {
   padding: $spacing-sm;
@@ -16,13 +16,15 @@
     opacity: 0.8;
   }
 
-  .tool-buttons, .type-buttons {
+  .tool-buttons,
+  .type-buttons {
     display: flex;
     gap: $spacing-sm;
     margin-bottom: $spacing-md;
   }
 
-  .tool-btn, .type-btn {
+  .tool-btn,
+  .type-btn {
     border: none;
     border-radius: $border-radius-sm;
     cursor: pointer;
@@ -33,7 +35,7 @@
     padding: $spacing-sm;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid transparent;
-    
+
     &:hover {
       background: rgba(255, 255, 255, 0.2);
     }
@@ -137,7 +139,7 @@
 
   .options-section {
     margin-bottom: $spacing-md;
-    
+
     label {
       display: block;
       margin-bottom: $spacing-xs;
@@ -152,7 +154,7 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: $text-light;
       border-radius: $border-radius-sm;
-      
+
       &:focus {
         outline: none;
         border-color: $primary-color;

@@ -1,4 +1,4 @@
-import { NPC, Entity, Vector2, MemoryItem } from '../types';
+import { NPC, Entity, Vector2, MemoryItem } from "../types";
 
 export class MemorySystem {
   /**
@@ -8,18 +8,18 @@ export class MemorySystem {
     if (!npc.memory) {
       npc.memory = {
         locations: new Map(),
-        lastSeen: new Map()
+        lastSeen: new Map(),
       };
     }
 
-    visibleEntities.forEach(entity => {
+    visibleEntities.forEach((entity) => {
       // Skip self
       if (entity.id === npc.id) return;
 
-      let subtype = '';
-      if (entity.type === 'resource') {
+      let subtype = "";
+      if (entity.type === "resource") {
         subtype = (entity as any).resourceType;
-      } else if (entity.type === 'building') {
+      } else if (entity.type === "building") {
         subtype = (entity as any).buildingType;
       } else if (entity.container) {
         // Containers might be buildings or separate entities, handle generic containers
@@ -30,15 +30,15 @@ export class MemorySystem {
 
       const memoryItem: MemoryItem = {
         id: entity.id,
-        type: entity.type as 'resource' | 'building',
+        type: entity.type as "resource" | "building",
         subtype,
         position: { ...entity.position }, // Copy position
-        timestamp: currentTick
+        timestamp: currentTick,
       };
 
       // Update location memory
       npc.memory.locations.set(entity.id, memoryItem);
-      
+
       // Update last seen timestamp for this subtype
       npc.memory.lastSeen.set(subtype, currentTick);
     });
@@ -47,7 +47,7 @@ export class MemorySystem {
   /**
    * Find a known location for a specific type of entity
    */
-  findLocation(npc: NPC, type: 'resource' | 'building', subtype: string): Vector2 | null {
+  findLocation(npc: NPC, type: "resource" | "building", subtype: string): Vector2 | null {
     if (!npc.memory || !npc.memory.locations) return null;
 
     // Find all memories matching the criteria
