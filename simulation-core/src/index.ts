@@ -19,31 +19,11 @@ const port = process.env.PORT || 3000;
 const world = new WorldManager();
 
 // Initialize the world
-// Initialize the world
 const generator = new WorldGenerator(world);
 generator.generate();
 
-// Simulation control state
-let simulationPaused = false;
-let tickRateMultiplier = 1; // 1x, 2x, 4x, 8x, 16x
-const BASE_TICK_RATE = 1000; // 1 second
-let simulationInterval: NodeJS.Timeout | null = null;
-
-function startSimulation() {
-  if (simulationInterval) {
-    clearInterval(simulationInterval);
-  }
-
-  const tickRate = BASE_TICK_RATE / tickRateMultiplier;
-  simulationInterval = setInterval(() => {
-    if (!simulationPaused) {
-      world.tick();
-    }
-  }, tickRate);
-}
-
-// Start the simulation loop
-startSimulation();
+// Start the simulation
+world.start();
 
 app.use(express.json());
 // Use path.join to correctly resolve the public directory
@@ -74,28 +54,27 @@ app.get("/meta/entities", (req, res) => {
 
 // Simulation control endpoints
 app.post("/simulation/pause", (req, res) => {
-  simulationPaused = true;
-  res.json({ paused: simulationPaused, speed: tickRateMultiplier });
+  world.pause();
+  res.json(world.getStatus());
 });
 
 app.post("/simulation/play", (req, res) => {
-  simulationPaused = false;
-  res.json({ paused: simulationPaused, speed: tickRateMultiplier });
+  world.resume();
+  res.json(world.getStatus());
 });
 
 app.post("/simulation/speed", (req, res) => {
   const { speed } = req.body;
-  if ([1, 2, 4, 8, 16].includes(speed)) {
-    tickRateMultiplier = speed;
-    startSimulation(); // Restart with new tick rate
-    res.json({ paused: simulationPaused, speed: tickRateMultiplier });
-  } else {
-    res.status(400).json({ error: "Invalid speed. Must be 1, 2, 4, 8, or 16" });
+  try {
+    world.setSpeed(speed);
+    res.json(world.getStatus());
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 
 app.get("/simulation/status", (req, res) => {
-  res.json({ paused: simulationPaused, speed: tickRateMultiplier });
+  res.json(world.getStatus());
 });
 
 // Save/Load endpoints
