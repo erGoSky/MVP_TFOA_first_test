@@ -71,14 +71,16 @@ class GOAPPlanner:
             return self.plan_cache[cache_key]
         
         # A* Search with depth limit
-        # Priority Queue: (f_cost, g_cost, depth, current_state, plan)
+        # Priority Queue: (f_cost, g_cost, depth, count, current_state, plan)
         # f_cost = g_cost + heuristic
+        # count is used to break ties and avoid comparing dictionaries
+        count = 0
         h_start = self._heuristic(start_state, goal_state)
-        queue = [(h_start, 0, 0, start_state, [])]
+        queue = [(h_start, 0, 0, count, start_state, [])]
         visited = set()
         
         while queue:
-            f_cost, g_cost, depth, current_state, plan = heapq.heappop(queue)
+            f_cost, g_cost, depth, _, current_state, plan = heapq.heappop(queue)
             
             # Check if goal is met
             if self._check_goal(current_state, goal_state):
@@ -104,8 +106,9 @@ class GOAPPlanner:
                     new_f_cost = new_g_cost + new_h_cost
                     new_plan = plan + [action.name]
                     new_depth = depth + 1
+                    count += 1
                     
-                    heapq.heappush(queue, (new_f_cost, new_g_cost, new_depth, new_state, new_plan))
+                    heapq.heappush(queue, (new_f_cost, new_g_cost, new_depth, count, new_state, new_plan))
         
         # No plan found
         return []
@@ -118,14 +121,37 @@ class GOAPPlanner:
         unmet = 0
         for key, target_value in goal.items():
             current_value = state.get(key)
+            
+            # Handle numeric thresholds
+            if isinstance(target_value, (int, float)) and isinstance(current_value, (int, float)):
+                # If target is 0, assume we want <= (e.g. hunger, fatigue)
+                if target_value == 0 and current_value <= 0.05:
+                    continue
+                # If target is positive, assume we want >= (e.g. gold, wood)
+                # Exception: Coordinates or specific values might need strict equality, 
+                # but in this system we use 'near_X' flags for location.
+                if target_value > 0 and current_value >= target_value:
+                    continue
+            
             if current_value != target_value:
                 unmet += 1
         return float(unmet)
     
     def _check_goal(self, state: Dict[str, Any], goal: Dict[str, Any]) -> bool:
         """Check if all goal conditions are met."""
-        for key, value in goal.items():
-            if state.get(key) != value:
+        for key, target_value in goal.items():
+            current_value = state.get(key)
+            
+            # Handle numeric thresholds
+            if isinstance(target_value, (int, float)) and isinstance(current_value, (int, float)):
+                # If target is 0, assume we want <= (e.g. hunger, fatigue)
+                if target_value == 0 and current_value <= 0.05:
+                    continue
+                # If target is positive, assume we want >= (e.g. gold, wood)
+                if target_value > 0 and current_value >= target_value:
+                    continue
+            
+            if current_value != target_value:
                 return False
         return True
     

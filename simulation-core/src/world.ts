@@ -191,7 +191,7 @@ export class WorldManager {
 
   public async updateNPC(npc: NPC) {
     // 1. Update Memory
-    this.memorySystem.updateMemory(npc, this.state);
+    this.memorySystem.updateMemory(npc, Object.values(this.state.entities), this.state.tick);
     
     // 2. Handle Active Action
     if (npc.actionState.inProgress) {

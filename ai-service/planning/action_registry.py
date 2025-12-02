@@ -356,6 +356,81 @@ class ActionRegistry:
         
         return max(0.1, base_cost)  # Minimum cost of 0.1
 
+    def expand_actions(self, npc_state: Dict[str, Any], world_state: Dict[str, Any]) -> List[Action]:
+        """Generate context-specific actions based on world state."""
+        actions = []
+        
+        # 1. Movement & Gathering (Resources)
+        resources = world_state.get('resources', {})
+        for r_id, r_data in resources.items():
+            r_type = r_data.get('type', 'unknown')
+            
+            # Move to resource
+            actions.append(Action(
+                name=f"move_to_{r_id}",
+                preconditions={},
+                effects={f"near_{r_id}": True},
+                cost=1.0 # Distance cost could be calculated here
+            ))
+            
+            # Gather from resource
+            # Map resource type to gather action
+            if r_type in ['bush_berry', 'tree_apple', 'wild_wheat', 'mushroom_red', 'mushroom_brown']:
+                actions.append(Action(
+                    name=f"gather_{r_type}",
+                    preconditions={f"near_{r_id}": True},
+                    effects={f"has_{r_type}": 1},
+                    cost=1.0
+                ))
+            elif r_type in ['tree_oak', 'tree_pine']:
+                actions.append(Action(
+                    name=f"chop_{r_type}",
+                    preconditions={f"near_{r_id}": True, "has_axe": True},
+                    effects={f"has_wood": 1},
+                    cost=2.0
+                ))
+            elif r_type in ['rock_stone', 'ore_iron']:
+                actions.append(Action(
+                    name=f"mine_{r_type}",
+                    preconditions={f"near_{r_id}": True, "has_pickaxe": True},
+                    effects={f"has_stone": 1 if 'stone' in r_type else 0, "has_ore": 1 if 'ore' in r_type else 0},
+                    cost=3.0
+                ))
+
+        # 2. Eating (Inventory)
+        # We assume if we have the item, we can eat it
+        # But for planning, we need an action that converts 'has_item' to 'hunger reduced'
+        food_items = ['bush_berry', 'tree_apple', 'bread', 'mushroom_red', 'mushroom_brown', 'meat_cooked']
+        
+        # Add generic eat actions for all known food types (so planner knows it CAN eat them if it gets them)
+        for food in food_items:
+            actions.append(Action(
+                name=f"eat_{food}",
+                preconditions={f"has_{food}": True},
+                effects={"hunger": -0.3}, # Simplified
+                cost=0.5
+            ))
+            
+        # 3. Buying (Market)
+        market_prices = world_state.get('market_prices', {})
+        for item, price in market_prices.items():
+            actions.append(Action(
+                name=f"buy_{item}",
+                preconditions={"gold": price}, # Check actual gold amount
+                effects={f"has_{item}": 1, "gold": -price},
+                cost=1.0
+            ))
+            
+        # 4. Work (Generic)
+        # Always allow working to get gold
+        actions.append(Action(
+            name="work_labor",
+            preconditions={},
+            effects={"gold": 5, "energy": -0.2},
+            cost=5.0
+        ))
+
+        return actions
 
 # Global registry instance
 registry = ActionRegistry()

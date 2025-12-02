@@ -185,6 +185,10 @@ def calculate_utility(data: UtilityRequest):
 from planning.types import Goal, GoalType, WorldState
 from planning.action_registry import registry as action_registry
 from planning.economic_planner import EconomicPlanner
+from planning.debugger import PlanningDebugger
+
+# Initialize Debugger
+debugger = PlanningDebugger()
 
 class EnhancedPlanRequest(BaseModel):
     npc_state: Dict[str, Any]  # NPC state (position, inventory, skills, stats)
@@ -232,12 +236,17 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
         world_state_data = data.world_state
         
         # Get all available actions from registry
-        all_actions = action_registry.get_all_actions()
+        static_actions = action_registry.get_all_actions()
+        dynamic_actions = action_registry.expand_actions(npc_state, world_state_data)
+        all_actions = static_actions + dynamic_actions
         
         # Apply personality-based cost modifiers
         personality = npc_state.get('personality', {})
         for action in all_actions:
-            action.cost = action_registry.calculate_cost(action.name, personality)
+            # Only apply to static actions or if we implement cost calc for dynamic ones
+            # For now, dynamic actions have fixed costs in expand_actions
+            if action.name in action_registry._actions:
+                action.cost = action_registry.calculate_cost(action.name, personality)
         
         # Check if goal involves obtaining an item
         goal_type = goal.get('type')
@@ -256,9 +265,9 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
             # Modify goal based on strategy
             if strategy == 'work_and_buy':
                 # Plan: work to earn gold, then buy
-                best_profession = details['best_profession']
+                # We don't need to set gold goal explicitly, the buy action precondition 
+                # will drive the need for gold.
                 goal_state = {
-                    'has_gold': details['gold_needed'],
                     f'has_{item}': True
                 }
             else:
@@ -274,8 +283,8 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
         start_state = {
             'pos_x': npc_state.get('position', {}).get('x', 0),
             'pos_y': npc_state.get('position', {}).get('y', 0),
-            'energy': npc_state.get('stats', {}).get('energy', 1.0),
-            'hunger': npc_state.get('stats', {}).get('hunger', 0.0),
+            'energy': npc_state.get('needs', {}).get('energy', 1.0),
+            'hunger': npc_state.get('needs', {}).get('hunger', 0.0),
             'health': npc_state.get('stats', {}).get('health', 100),
             'gold': npc_state.get('stats', {}).get('money', 0)
         }
@@ -317,11 +326,82 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
         print(f"❌ Error in plan_action_enhanced: {str(e)}")
         import traceback
         traceback.print_exc()
+        
+        # Record failure
+        try:
+            # Reconstruct goal object for recording
+            goal_obj = Goal(
+                id=data.goal.get('id', 'unknown'),
+                type=GoalType(data.goal.get('type', 'maintain_need')),
+                priority=data.goal.get('priority', 0.0),
+                conditions=[]
+            )
+            debugger.record_plan(
+                npc_id=data.npc_state.get('id', 'unknown'),
+                goal=goal_obj,
+                plan=None,
+                duration_ms=0,
+                success=False,
+                error=str(e)
+            )
+        except:
+            pass
+            
         return {
             "success": False,
             "plan": [],
             "error": str(e)
         }
+    
+    # Record success/failure
+    try:
+        import time
+        start_time = time.time()
+        
+        # Reconstruct goal object
+        goal_obj = Goal(
+            id=goal.get('id', 'unknown'),
+            type=GoalType(goal.get('type', 'maintain_need')),
+            priority=goal.get('priority', 0.0),
+            conditions=[]
+        )
+        
+        debugger.record_plan(
+            npc_id=npc_state.get('id', 'unknown'),
+            goal=goal_obj,
+            plan=plan,
+            duration_ms=(time.time() - start_time) * 1000,
+            success=True if plan else False,
+            error="No plan found" if not plan else None
+        )
+    except Exception as rec_err:
+        print(f"Failed to record plan debug info: {rec_err}")
+
+    return {
+        "success": True if plan else False,
+        "plan": plan if plan else [],
+        "valid": is_valid if plan else False,
+        "total_cost": total_cost if plan else 0,
+        "economic_strategy": strategy if goal_type == 'obtain_item' else None,
+        "error": "No plan found" if not plan else None
+    }
+
+# Debug Endpoints
+
+@app.get("/debug/npc/{npc_id}/planning")
+def get_npc_planning_history(npc_id: str):
+    """Get planning history for a specific NPC."""
+    return debugger.get_history(npc_id)
+
+@app.get("/debug/npc/{npc_id}/goals")
+def get_npc_active_goals(npc_id: str):
+    """Get active goals for a specific NPC."""
+    return debugger.get_active_goals(npc_id)
+
+@app.get("/debug/stats")
+def get_system_stats():
+    """Get system-wide planning statistics."""
+    return debugger.get_stats()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

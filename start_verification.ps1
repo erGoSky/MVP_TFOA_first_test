@@ -1,4 +1,4 @@
-$root = "d:\prj\godot\MVP_TFOA_first_test"
+$root = $PSScriptRoot
 
 Write-Host "Starting TFOA Verification Environment"
 

@@ -205,7 +205,15 @@ class EconomicPlanner:
     def _check_materials(self, item: str, npc_state: Dict[str, Any]) -> bool:
         """Check if NPC has materials to craft item."""
         # Simplified - would need recipe database
-        inventory = npc_state.get('inventory', {})
+        inventory = npc_state.get('inventory', [])
+        
+        # Convert list to dict if needed
+        if isinstance(inventory, list):
+            inv_dict = {}
+            for i in inventory:
+                inv_dict[i.get('type')] = i.get('quantity', 0)
+            inventory = inv_dict
+            
         # Example: assume most items need wood or ore
         return inventory.get('wood', 0) > 0 or inventory.get('ore', 0) > 0
     

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { NPC } from '../../types/world';
 import './NPCCard.scss';
+import PlanningDebugPanel from '../debug/PlanningDebugPanel';
 
 interface NPCCardProps {
   npc: NPC;
@@ -8,6 +9,7 @@ interface NPCCardProps {
 }
 
 export const NPCCard: React.FC<NPCCardProps> = ({ npc, onClick }) => {
+  const [showDebug, setShowDebug] = useState(false);
   const hunger = (1 - npc.needs.hunger) * 100;
   const energy = npc.needs.energy * 100;
   const health = npc.stats.health;
@@ -97,6 +99,29 @@ export const NPCCard: React.FC<NPCCardProps> = ({ npc, onClick }) => {
             <div className="inventory-item empty">Empty</div>
           )}
         </div>
+      </div>
+
+      <div className="debug-section" style={{ marginTop: '10px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+        <button 
+            onClick={(e) => { e.stopPropagation(); setShowDebug(!showDebug); }}
+            style={{ 
+                background: 'none', 
+                border: '1px solid #ccc', 
+                borderRadius: '4px', 
+                cursor: 'pointer',
+                padding: '4px 8px',
+                fontSize: '0.8rem',
+                width: '100%'
+            }}
+        >
+            {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
+        </button>
+        
+        {showDebug && (
+            <div onClick={(e) => e.stopPropagation()}>
+                <PlanningDebugPanel npcId={npc.id} />
+            </div>
+        )}
       </div>
     </div>
   );
