@@ -3,19 +3,19 @@ After the NPC has chosen what to do, it sends an AI request containing its inten
 
 We need to add action planning, with an action stack. For example, if the AI ​​decides it needs a chest, it needs resources with which to craft the chest or resources with which to buy the chest. If it decides to craft the chest, it must consider where it can get the resources for the chest. It can either try to mine them itself or try to buy these resources. If it decides to mine these resources itself, it must determine which basic resources it needs to mine and how to process these resources to obtain materials for creating the chest.
 
-нужно добавить планирование действий, с стеком действий например 
-искусственный интеллект решил что ему нужен ящик значит ему нужны 
-ресурсы с которых он сможет сделать ящик или ресурсы за которые он 
-сможет купить ящик, если он решил делать ящик он должен подумать 
-где он может взять ресурсы для этого ящика, он может либо сам 
-попытаться их добыть либо попытаться купить эти ресурсы если он 
-решил сам добыть эти ресурсы он должен определить какие 
-базовие ресурси он должен добыть и как єти ресурси обработать для получения метериалов для 
-создания сундука. 
+нужно добавить планирование действий, с стеком действий например
+искусственный интеллект решил что ему нужен ящик значит ему нужны
+ресурсы с которых он сможет сделать ящик или ресурсы за которые он
+сможет купить ящик, если он решил делать ящик он должен подумать
+где он может взять ресурсы для этого ящика, он может либо сам
+попытаться их добыть либо попытаться купить эти ресурсы если он
+решил сам добыть эти ресурсы он должен определить какие
+базовие ресурси он должен добыть и как єти ресурси обработать для получения метериалов для
+создания сундука.
 
 That is, it is necessary to construct a goal achievement graph and evaluate/find the most optimal path to achieving this goal, following stages in the form of nodes/(intermediate tasks).
 тоєсть нужно построить граф достижения цели и оценить/найти найболее оптимальный путь
-к достижению этой цели следуя етапам в виде нод/(промежуточних задачь) 
+к достижению этой цели следуя етапам в виде нод/(промежуточних задачь)
 
 
 We need to add NPC action planning, add a stack of planned actions, for example: (further example is needed to create a general solution) The AI ​​decides it needs a crate, which means it needs resources to craft the crate, or resources to buy the crate with. If it decides to craft the crate itself, it must consider where it can get the resources for this crate. It can either try to obtain them itself or try to buy these resources. If it decides to obtain these resources itself, it must determine which basic resources it needs to obtain and how to process these resources to obtain materials for crafting the chest.
