@@ -1,16 +1,14 @@
-from typing import Dict, List, Optional, Tuple
-import time
-import heapq
-from dataclasses import asdict
+from typing import Dict, List, Optional
 
-from .types import Goal, GoalType
+from .types import Goal
+
 
 class GoalManager:
     def __init__(self):
         # Priority queue for each NPC: {npc_id: [Goal, ...]}
         # We use a list and heapq to maintain priority
         self.goals: Dict[str, List[Goal]] = {}
-        
+
         # Track active goal per NPC
         self.active_goals: Dict[str, str] = {}  # npc_id -> goal_id
 
@@ -18,14 +16,14 @@ class GoalManager:
         """Add a goal to the NPC's queue."""
         if npc_id not in self.goals:
             self.goals[npc_id] = []
-            
+
         # Check if goal already exists (by ID)
         existing_idx = -1
         for i, g in enumerate(self.goals[npc_id]):
             if g.id == goal.id:
                 existing_idx = i
                 break
-        
+
         if existing_idx >= 0:
             # Update existing goal if new priority is higher
             if goal.priority > self.goals[npc_id][existing_idx].priority:
@@ -41,7 +39,7 @@ class GoalManager:
         """Get the highest priority goal for the NPC."""
         if npc_id not in self.goals or not self.goals[npc_id]:
             return None
-            
+
         # Return highest priority (first in sorted list)
         return self.goals[npc_id][0]
 
