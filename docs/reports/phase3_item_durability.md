@@ -21,7 +21,7 @@ This phase introduced durability mechanics for tools and equipment. Items now de
 
 ### 4. UI Visualization
 - **Durability Bars**: Small progress bars appear under tools in inventory displays.
-- **Color Coding**: 
+- **Color Coding**:
   - Green: >70% durability
   - Yellow: 30-70% durability
   - Red: <30% durability
