@@ -196,10 +196,10 @@ export interface NPC extends Entity {
   ownedBuildingIds: string[]; // List of owned buildings
   memory: NPCMemory;
   actionPlan?: {
-    // NEW: Stores action sequence from GOAP planner
     actions: string[];
     currentIndex: number;
   };
+  lastPlanRequestTick?: number; // Throttling: last tick a plan was requested
 }
 
 export interface Building extends Entity {
@@ -218,6 +218,7 @@ export interface Tile {
   biome: BiomeType;
   elevation: number;
   moisture: number;
+  resource?: string; // ID of resource on this tile
 }
 
 export interface WorldState {

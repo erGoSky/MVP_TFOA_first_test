@@ -4,14 +4,27 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from goap import Action, GOAPPlanner
+from planning.action_registry import registry as action_registry
+from planning.debugger import PlanningDebugger
+from planning.economic_planner import EconomicPlanner
+from planning.types import Goal, GoalType
 
 # Disable uvicorn access logs
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 app = FastAPI()
+
+
+# Global exception handler to ensure fail-fast in debug mode
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    print(f"❌ CRITICAL ERROR: {exc}")
+    import sys
+
+    sys.exit(1)
 
 
 class Needs(BaseModel):
@@ -38,8 +51,8 @@ class NPCState(BaseModel):
     stats: Stats
     skills: Dict[str, float]
     inventory: List[Dict[str, Any]]
-    currentAction: Optional[str]
-    homeId: Optional[str] = None
+    current_action: Optional[str] = Field(None, alias="currentAction")
+    home_id: Optional[str] = Field(None, alias="homeId")
 
 
 class UtilityRequest(BaseModel):
@@ -58,9 +71,9 @@ def calculate_utility(data: UtilityRequest):
     max_utility = -1000.0
 
     # Weights
-    W_NEEDS = 0.6
-    W_ECONOMIC = 0.4
-    W_RISK = 0.2
+    w_needs = 0.6
+    w_economic = 0.4
+    w_risk = 0.2
 
     # Analyze Inventory
     food_count = 0
@@ -80,7 +93,7 @@ def calculate_utility(data: UtilityRequest):
 
         inventory_map[item["type"]] = inventory_map.get(item["type"], 0) + item["quantity"]
 
-    FOOD_THRESHOLD = 3
+    food_threshold = 3
 
     for action in data.options:
         u_needs = 0.0
@@ -96,9 +109,8 @@ def calculate_utility(data: UtilityRequest):
                 u_needs += 1.5
 
         # Energy
-        if data.npc.needs.energy < 0.3:
-            if action.type == "sleep":
-                u_needs += 2.0
+        if data.npc.needs.energy < 0.3 and action.type == "sleep":
+            u_needs += 2.0
 
         # 2. Economic & Stockpiling Utility
         if action.type == "work":
@@ -119,7 +131,7 @@ def calculate_utility(data: UtilityRequest):
             val = action.params.get("value", 0.1)
             u_economic += val
 
-            if is_food and food_count < FOOD_THRESHOLD:
+            if is_food and food_count < food_threshold:
                 u_needs += 0.5  # Boost for food security
 
         elif action.type == "craft":
@@ -133,7 +145,7 @@ def calculate_utility(data: UtilityRequest):
             is_food = item_type in ["bush_berry", "tree_apple", "bread"]
 
             if is_food:
-                if count > FOOD_THRESHOLD:
+                if count > food_threshold:
                     u_economic += action.params.get("value", 0.5) * 1.5  # Good to sell surplus
                 else:
                     u_economic -= 0.5  # Don't sell last food!
@@ -153,18 +165,21 @@ def calculate_utility(data: UtilityRequest):
 
         # 4. Housing Logic
         # If homeless and rich, build a house
-        if action.type == "create_contract" and not data.npc.homeId and data.npc.stats.money >= 100:
+        if (
+            action.type == "create_contract"
+            and not data.npc.home_id
+            and data.npc.stats.money >= 100
+        ):
             u_economic += 0.8
 
         # If tired, prioritize sleeping at home
-        if action.type == "sleep":
-            if data.npc.needs.energy < 0.3:
-                u_needs += 0.8
+        if action.type == "sleep" and data.npc.needs.energy < 0.3:
+            u_needs += 0.8
 
         if action.type == "move":
             target = action.params.get("target")
             # If tired and moving to home
-            if data.npc.homeId and target == data.npc.homeId and data.npc.needs.energy < 0.4:
+            if data.npc.home_id and target == data.npc.home_id and data.npc.needs.energy < 0.4:
                 u_needs += 0.9
 
         # 5. Builder Logic
@@ -183,12 +198,11 @@ def calculate_utility(data: UtilityRequest):
             "tree_oak",
         ] or action.params.get("resource_type", "") in ["rock_stone", "tree_oak", "tree_pine"]
 
-        if is_building_mat:
-            if data.npc.stats.money > 50:  # Likely have prepayment
-                u_economic += 0.6
+        if is_building_mat and data.npc.stats.money > 50:  # Likely have prepayment
+            u_economic += 0.6
 
         # Calculate Total Utility
-        total_utility = (u_needs * W_NEEDS) + (u_economic * W_ECONOMIC) - (u_risk * W_RISK)
+        total_utility = (u_needs * w_needs) + (u_economic * w_economic) - (u_risk * w_risk)
 
         # Add some randomness to break loops
         total_utility += np.random.normal(0, 0.05)
@@ -215,10 +229,9 @@ def calculate_utility(data: UtilityRequest):
 
 
 # GOAP Integration
-from planning.action_registry import registry as action_registry
-from planning.debugger import PlanningDebugger
-from planning.economic_planner import EconomicPlanner
-from planning.types import Goal, GoalType
+# GOAP Integration
+# Imports moved to top
+
 
 # Initialize Debugger
 debugger = PlanningDebugger()
@@ -269,6 +282,17 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
     TypeScript will execute actions tick-by-tick.
     """
     try:
+        # Debug logging
+        print(
+            f"📥 Received plan request for NPC: {data.npc_state.get('name')} ({data.npc_state.get('id')})"
+        )
+        print(f"   Goal: {data.goal.get('type')}")
+
+        # Calculate approximate payload size
+        resources_count = len(data.world_state.get("resources", []))
+        buildings_count = len(data.world_state.get("buildings", []))
+        print(f"   World State: {resources_count} resources, {buildings_count} buildings")
+
         # Extract data
         npc_state = data.npc_state
         goal = data.goal
@@ -378,7 +402,7 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
                 success=False,
                 error=str(e),
             )
-        except:
+        except Exception:
             pass
 
         return {"success": False, "plan": [], "error": str(e)}
@@ -402,14 +426,14 @@ def plan_action_enhanced(data: EnhancedPlanRequest):
             goal=goal_obj,
             plan=plan,
             duration_ms=(time.time() - start_time) * 1000,
-            success=True if plan else False,
+            success=bool(plan),
             error="No plan found" if not plan else None,
         )
     except Exception as rec_err:
         print(f"Failed to record plan debug info: {rec_err}")
 
     return {
-        "success": True if plan else False,
+        "success": bool(plan),
         "plan": plan if plan else [],
         "valid": is_valid if plan else False,
         "total_cost": total_cost if plan else 0,

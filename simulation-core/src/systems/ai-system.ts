@@ -55,9 +55,19 @@ export class AISystem {
     const activeGoal = this.goalManager.getNextGoal(npc.id);
 
     if (activeGoal) {
+      // Throttling: Check if we requested a plan recently
+      const lastRequest = npc.lastPlanRequestTick || 0;
+      if (tick - lastRequest < 100) {
+        // console.log(`⏳ ${npc.name} waiting for plan cooldown (${tick - lastRequest}/100)`);
+        return; // Skip this tick
+      }
+
       console.log(`🎯 ${npc.name} pursuing goal: ${activeGoal.type} (${activeGoal.id})`);
 
-      const worldStateForAI = this.getWorldStateForAI(world);
+      // Update timestamp BEFORE request to prevent re-entry if async takes time
+      npc.lastPlanRequestTick = tick;
+
+      const worldStateForAI = this.getWorldStateForAI(world, npc);
       const plan = await APIService.requestPlan(npc, activeGoal, worldStateForAI);
 
       if (plan && plan.length > 0) {
@@ -79,21 +89,34 @@ export class AISystem {
     npc.actionState = { inProgress: true, startTime: tick, duration: 10 };
   }
 
-  private getWorldStateForAI(world: WorldManager) {
+  private getWorldStateForAI(world: WorldManager, npc: NPC) {
     const state = world.getState();
+    const visionRadius = 50; // Only send entities within this radius
+
+    // Helper to check distance
+    const isVisible = (pos: { x: number; y: number }) => {
+      const dx = pos.x - npc.position.x;
+      const dy = pos.y - npc.position.y;
+      return Math.sqrt(dx * dx + dy * dy) <= visionRadius;
+    };
+
     return {
       time: state.time,
-      resources: Object.values(state.resources).map((r) => ({
-        id: r.id,
-        type: r.resourceType,
-        position: r.position,
-        amount: r.amount,
-      })),
-      buildings: Object.values(state.buildings).map((b) => ({
-        id: b.id,
-        type: b.buildingType,
-        position: b.position,
-      })),
+      resources: Object.values(state.resources)
+        .filter((r) => isVisible(r.position))
+        .map((r) => ({
+          id: r.id,
+          type: r.resourceType,
+          position: r.position,
+          amount: r.amount,
+        })),
+      buildings: Object.values(state.buildings)
+        .filter((b) => isVisible(b.position))
+        .map((b) => ({
+          id: b.id,
+          type: b.buildingType,
+          position: b.position,
+        })),
     };
   }
 

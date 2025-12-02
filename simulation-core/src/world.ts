@@ -24,6 +24,8 @@ import { TimeManager } from "./core/time-manager";
 import { EntityManager } from "./core/entity-manager";
 import { AISystem } from "./systems/ai-system";
 
+const debugMode = process.env.DEBUG_SINGLE_NPC === "true";
+
 export class WorldManager {
   // Public for system access
   public timeManager: TimeManager;
@@ -31,6 +33,10 @@ export class WorldManager {
   public actionManager: ActionManager;
 
   private aiSystem: AISystem;
+
+  // Store tiles to persist biome data
+  private tiles: any[][] = [];
+  private tilesInitialized: boolean = false;
 
   // Legacy item registry (should move to a system)
   public readonly ITEM_REGISTRY: Record<string, string[]> = {
@@ -61,6 +67,32 @@ export class WorldManager {
 
     // Subscribe to tick
     this.timeManager.on("tick", (tick) => this.onTick(tick));
+
+    // Initialize tiles
+    this.initializeTiles();
+  }
+
+  private initializeTiles() {
+    for (let y = 0; y < 100; y++) {
+      this.tiles[y] = [];
+      for (let x = 0; x < 100; x++) {
+        this.tiles[y][x] = { biome: "grass", resource: null };
+      }
+    }
+    this.tilesInitialized = true;
+  }
+
+  // Allow world generator to set tiles
+  public setTiles(tiles: any[][]) {
+    this.tiles = tiles;
+    this.tilesInitialized = true;
+  }
+
+  // Allow world generator to set individual tile
+  public setTile(x: number, y: number, tile: any) {
+    if (y >= 0 && y < this.tiles.length && x >= 0 && x < this.tiles[y].length) {
+      this.tiles[y][x] = tile;
+    }
   }
 
   private registerHandlers() {
@@ -143,6 +175,7 @@ export class WorldManager {
   }
   public reset() {
     this.entityManager.reset();
+    this.initializeTiles();
   }
 
   // Computed State
@@ -155,20 +188,29 @@ export class WorldManager {
       time: timeStatus.tick, // Legacy mapping
       width: 100,
       height: 100,
-      tiles: [], // Tiles not yet managed by EntityManager
+      tiles: this.tiles, // Return stored tiles
       ...entityState,
       contracts: {}, // Contracts not yet managed
     };
   }
 
   // Main Loop
-  public onTick(tick: number) {
+  public async onTick(tick: number) {
     const npcs = this.entityManager.getNPCs();
 
-    // Update all NPCs via AISystem
-    npcs.forEach((npc) => {
-      this.aiSystem.update(npc, this, tick);
-    });
+    if (debugMode) {
+      // Debug Mode: Process only the first NPC and wait for it
+      const npc = npcs[0];
+      if (npc) {
+        // console.log(`[DEBUG] Processing single NPC: ${npc.name}`);
+        await this.aiSystem.update(npc, this, tick);
+      }
+    } else {
+      // Normal Mode: Update all NPCs concurrently (fire and forget)
+      npcs.forEach((npc) => {
+        this.aiSystem.update(npc, this, tick);
+      });
+    }
   }
 
   // Legacy alias for index.ts compatibility (if needed)
@@ -198,100 +240,94 @@ export class WorldManager {
     if (item) {
       item.quantity -= quantity;
       if (item.quantity <= 0) {
-        npc.inventory = npc.inventory.filter((i) => i.type !== type);
+        npc.inventory = npc.inventory.filter((i) => i !== item);
       }
     }
   }
 
-  public hasItem(npc: NPC, type: string, quantity: number): boolean {
-    const item = npc.inventory.find((i) => i.type === type);
-    return item ? item.quantity >= quantity : false;
+  // Save/Load (should move to FileManager)
+  public saveState(filename: string) {
+    const state = this.getState();
+    const fs = require("fs");
+    fs.writeFileSync(filename, JSON.stringify(state, null, 2));
+    console.log(`World saved to ${filename}`);
   }
 
-  public getDistance(p1: Vector2, p2: Vector2): number {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  // Option Generators (Should move to AISystem)
-  // ... (Keeping these for now to minimize breakage, but they should be refactored)
-  // For brevity, I'm omitting the full implementation of getSurvivalOptions etc.
-  // assuming they are used by decideAction which is deprecated/legacy.
-  // Wait, decideAction is NOT used in the new GOAP flow (updateNPC uses requestPlan).
-  // So I can probably remove them!
-
-  // Checking usage: decideAction was used in the OLD updateNPC.
-  // The NEW updateNPC uses requestPlan.
-  // So I can safely remove getSurvivalOptions, getResourceOptions, etc. IF they are not used elsewhere.
-
-  // Let's keep them if I'm unsure, but I'll comment them out or stub them to save space.
-  // Actually, I'll remove them to clean up.
-
-  // Save/Load (Delegate to FileManager - TODO)
-  public async saveState(filename: string): Promise<void> {
-    // ... (Keep existing implementation for now, adapting to use getState)
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const savesDir = path.join(process.cwd(), "saves");
-    if (!(await this.exists(savesDir))) await fs.mkdir(savesDir);
-    const filepath = path.join(savesDir, `${filename}.json`);
-    const stateToSave = { ...this.getState(), entities: {} }; // Avoid duplication
-    await fs.writeFile(filepath, JSON.stringify(stateToSave, null, 2), "utf-8");
-    console.log(`World state saved to ${filepath}`);
-  }
-
-  public async loadState(filename: string): Promise<void> {
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const savesDir = path.join(process.cwd(), "saves");
-    const filepath = path.join(savesDir, `${filename}.json`);
-    const stateJson = await fs.readFile(filepath, "utf-8");
-    const loadedState = JSON.parse(stateJson);
-
-    // Restore to EntityManager
-    this.entityManager.reset();
-    Object.values(loadedState.npcs).forEach((n: any) =>
-      this.entityManager.createNPC(n.id, n.name, n.position, n.skills, n.personality?.archetype)
-    );
-    Object.values(loadedState.resources).forEach((r: any) =>
-      this.entityManager.createResource(r.id, r.resourceType, r.position, r.amount, r.properties)
-    );
-    Object.values(loadedState.buildings).forEach((b: any) =>
-      this.entityManager.createBuilding(b.id, b.buildingType, b.position)
-    );
+  public loadState(filename: string) {
+    const fs = require("fs");
+    const data = fs.readFileSync(filename, "utf-8");
+    const state = JSON.parse(data);
 
     // Restore time
-    this.timeManager.setTick(loadedState.tick);
-    console.log(`World state loaded from ${filepath}`);
+    this.timeManager.setTick(state.tick);
+
+    // Restore entities
+    this.entityManager.reset();
+    Object.values(state.npcs).forEach((npc: any) => {
+      const restored = this.entityManager.createNPC(
+        npc.id,
+        npc.name,
+        npc.position,
+        npc.skills,
+        npc.personality.archetype
+      );
+      Object.assign(restored, npc);
+    });
+
+    Object.values(state.resources).forEach((res: any) => {
+      const restored = this.entityManager.createResource(
+        res.id,
+        res.resourceType,
+        res.position,
+        res.amount,
+        res.properties
+      );
+      Object.assign(restored, res);
+    });
+
+    Object.values(state.buildings).forEach((bld: any) => {
+      const restored = this.entityManager.createBuilding(bld.id, bld.buildingType, bld.position);
+      Object.assign(restored, bld);
+    });
+
+    // Restore tiles
+    if (state.tiles) {
+      this.tiles = state.tiles;
+      this.tilesInitialized = true;
+    }
+
+    console.log(`World loaded from ${filename}`);
   }
 
   public async getSavesList(): Promise<string[]> {
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const savesDir = path.join(process.cwd(), "saves");
-    try {
-      const files = await fs.readdir(savesDir);
-      return files.filter((f) => f.endsWith(".json")).map((f) => f.replace(".json", ""));
-    } catch {
+    const fs = require("fs");
+    const path = require("path");
+    const savesDir = "./saves";
+
+    if (!fs.existsSync(savesDir)) {
       return [];
     }
+
+    return fs.readdirSync(savesDir).filter((file: string) => file.endsWith(".json"));
   }
 
   public async deleteSave(filename: string): Promise<void> {
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const filepath = path.join(process.cwd(), "saves", `${filename}.json`);
-    await fs.unlink(filepath);
+    const fs = require("fs");
+    const path = require("path");
+    const filePath = path.join("./saves", filename);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted save file: ${filename}`);
+    } else {
+      throw new Error(`Save file not found: ${filename}`);
+    }
   }
 
-  private async exists(path: string): Promise<boolean> {
-    const fs = await import("fs/promises");
-    try {
-      await fs.access(path);
-      return true;
-    } catch {
-      return false;
-    }
+  // Helper for distance calculation (used by handlers)
+  public getDistance(pos1: Vector2, pos2: Vector2): number {
+    const dx = pos1.x - pos2.x;
+    const dy = pos1.y - pos2.y;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 }

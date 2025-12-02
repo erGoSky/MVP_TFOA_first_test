@@ -15,9 +15,10 @@ import os
 import sys
 from typing import Any, Dict, List, Optional
 
+# Add parent directory to path before importing local modules
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from goap import Action
+from goap import Action  # noqa: E402
 
 
 class ActionRegistry:
@@ -413,9 +414,16 @@ class ActionRegistry:
         actions = []
 
         # 1. Movement & Gathering (Resources)
-        resources = world_state.get("resources", {})
-        for r_id, r_data in resources.items():
-            r_type = r_data.get("type", "unknown")
+        resources = world_state.get("resources", [])
+
+        # Handle both list and dict formats
+        if isinstance(resources, list):
+            resource_items = [(r.get("id", f"res_{i}"), r) for i, r in enumerate(resources)]
+        else:
+            resource_items = list(resources.items())
+
+        for r_id, r_data in resource_items:
+            r_type = r_data.get("type") or r_data.get("resourceType", "unknown")
 
             # Move to resource
             actions.append(
