@@ -11,10 +11,13 @@ export class APIService {
           id: npc.id,
           name: npc.name,
           position: npc.position,
-          inventory: npc.inventory,
+          inventory: npc.inventory.map((item) => ({ type: item.type, quantity: item.quantity })), // Simplified
           skills: npc.skills,
           stats: npc.stats,
-          personality: npc.personality,
+          personality: {
+            traits: npc.personality.traits,
+            archetype: npc.personality.archetype,
+          },
         },
         goal: goal,
         world_state: worldState,

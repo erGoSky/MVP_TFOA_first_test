@@ -16,6 +16,18 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Fail-fast on errors
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ UNHANDLED REJECTION:", reason);
+  process.exit(1);
+});
+
 const world = new WorldManager();
 
 // Initialize the world

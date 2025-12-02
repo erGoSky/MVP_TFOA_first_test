@@ -8,7 +8,7 @@ export class ContractHandler implements ActionHandler {
 
     if (actionType === "create_contract") {
       const templateId = targetId; // e.g. 'house_small'
-      const template = world.BUILDING_TEMPLATES[templateId];
+      const template = world.entityManager.BUILDING_TEMPLATES[templateId];
 
       if (template && npc.stats.money >= 100) {
         // Simple cost check
@@ -77,7 +77,7 @@ export class ContractHandler implements ActionHandler {
         contract.status = "completed";
 
         // Create building
-        const template = world.BUILDING_TEMPLATES[contract.templateId!];
+        const template = world.entityManager.BUILDING_TEMPLATES[contract.templateId!];
         const buildingId = `build_${Date.now()}`;
         world.createBuilding(buildingId, template.name, {
           x: npc.position.x + 2,

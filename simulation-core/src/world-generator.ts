@@ -49,10 +49,10 @@ export class WorldGenerator {
   }
 
   private generateTerrain(mapSize: number) {
-    this.world.getState().tiles = [];
+    // Tiles are already initialized in WorldManager constructor
+    // We just need to set the biome for each tile
 
     for (let y = 0; y < mapSize; y++) {
-      const row: Tile[] = [];
       for (let x = 0; x < mapSize; x++) {
         const scale = 0.05;
         const elevation = this.noise.noise(x * scale, y * scale, 0);
@@ -60,9 +60,8 @@ export class WorldGenerator {
 
         const biome = this.getBiome(elevation, moisture);
 
-        row.push({ x, y, biome, elevation, moisture });
+        this.world.setTile(x, y, { x, y, biome, elevation, moisture, resource: null });
       }
-      this.world.getState().tiles.push(row);
     }
   }
 
@@ -76,9 +75,11 @@ export class WorldGenerator {
   }
 
   private populateResources(mapSize: number, density: number) {
+    const state = this.world.getState();
+
     for (let y = 0; y < mapSize; y++) {
       for (let x = 0; x < mapSize; x++) {
-        const tile = this.world.getState().tiles[y][x];
+        const tile = state.tiles[y][x];
 
         if (tile.biome === "water") continue;
         if (Math.random() > density) continue;
@@ -88,6 +89,10 @@ export class WorldGenerator {
           const id = `res_${resource.type}_${x}_${y}`;
           const amt = Math.floor(Math.random() * 5) + 1;
           this.world.createResource(id, resource.type, { x, y }, amt, resource.props);
+
+          // Update tile to reference resource
+          tile.resource = id;
+          this.world.setTile(x, y, tile);
         }
       }
     }
@@ -163,15 +168,16 @@ export class WorldGenerator {
 
       // Place a chest next to the tavern
       const chestPos = { x: pos.x + 1, y: pos.y };
-      if (this.isValidBuildSpot(chestPos)) {
-        this.world.createContainer("c_tavern_chest", "chest_small", chestPos, 20);
-        // Add some starter items
-        const chest = this.world.getState().buildings["c_tavern_chest"].container;
-        if (chest) {
-          chest.contents.push({ id: "i_starter_bread", type: "bread", quantity: 5 });
-          chest.contents.push({ id: "i_starter_water", type: "water_flask", quantity: 5 });
-        }
-      }
+      // TODO: Re-implement container system
+      // if (this.isValidBuildSpot(chestPos)) {
+      //   this.world.createContainer("c_tavern_chest", "chest_small", chestPos, 20);
+      //   // Add some starter items
+      //   const chest = this.world.getState().buildings["c_tavern_chest"].container;
+      //   if (chest) {
+      //     chest.contents.push({ id: "i_starter_bread", type: "bread", quantity: 5 });
+      //     chest.contents.push({ id: "i_starter_water", type: "water_flask", quantity: 5 });
+      //   }
+      // }
 
       // Place workstations around the tavern
       const workstations = [
