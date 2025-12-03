@@ -102,7 +102,7 @@ describe("AISystem", () => {
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(mockPlan);
 
       // Add a goal manually
-      aiSystem.addGoal(npc.id, {
+      (aiSystem as any).goalManager.addGoal(npc.id, {
         id: "goal1",
         type: "OBTAIN_ITEM",
         priority: 10,
@@ -119,7 +119,7 @@ describe("AISystem", () => {
       npc.lastPlanRequestTick = -1000; // Ensure no throttling
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(null);
 
-      aiSystem.addGoal(npc.id, {
+      (aiSystem as any).goalManager.addGoal(npc.id, {
         id: "goal2",
         type: "OBTAIN_ITEM",
         priority: 10,
@@ -141,7 +141,7 @@ describe("AISystem", () => {
         need: "hunger",
       };
 
-      expect(() => aiSystem.addGoal("npc1", goal)).not.toThrow();
+      expect(() => (aiSystem as any).goalManager.addGoal("npc1", goal)).not.toThrow();
     });
   });
 });

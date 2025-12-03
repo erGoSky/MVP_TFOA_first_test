@@ -25,7 +25,7 @@ describe("APIService", () => {
         },
       });
 
-      const result = await APIService.requestPlan(npc, goal, worldState);
+      const result = await APIService.requestPlan(npc, goal, [], worldState);
 
       expect(result).toEqual(mockPlan);
       expect(mockedAxios.post).toHaveBeenCalledWith(
@@ -52,7 +52,7 @@ describe("APIService", () => {
         },
       });
 
-      const result = await APIService.requestPlan(npc, goal, worldState);
+      const result = await APIService.requestPlan(npc, goal, [], worldState);
 
       expect(result).toBeNull();
     });
@@ -64,7 +64,7 @@ describe("APIService", () => {
 
       mockedAxios.post.mockRejectedValue(new Error("Network error"));
 
-      const result = await APIService.requestPlan(npc, goal, worldState);
+      const result = await APIService.requestPlan(npc, goal, [], worldState);
 
       expect(result).toBeNull();
     });

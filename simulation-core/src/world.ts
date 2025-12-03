@@ -1,5 +1,7 @@
 import { WorldState, NPC, Vector2, Resource, Building, Skills, BuildingTemplate } from "./types";
 import axios from "axios";
+import * as fs from "fs/promises";
+import * as path from "path";
 import { ActionManager } from "./actions/action-manager";
 import { MoveHandler } from "./actions/handlers/move.handler";
 import { PickupHandler } from "./actions/handlers/pickup.handler";
@@ -394,6 +396,186 @@ export class WorldManager {
    */
   public tick() {
     console.warn("Manual world.tick() called. Use world.start() instead.");
+  }
+
+  /**
+   * Saves the current world state to a file.
+   *
+   * @param filename - Name of the file to save to (relative to saves/ directory)
+   */
+  public async saveState(filename: string): Promise<void> {
+    const state = this.getState();
+    const saveDir = path.join(process.cwd(), "saves");
+
+    try {
+      await fs.mkdir(saveDir, { recursive: true });
+      await fs.writeFile(path.join(saveDir, filename), JSON.stringify(state, null, 2));
+      console.log(`World saved to ${filename}`);
+    } catch (error) {
+      console.error(`Failed to save world: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Loads world state from a file.
+   *
+   * @param filename - Name of the file to load from (relative to saves/ directory)
+   */
+  public async loadState(filename: string): Promise<void> {
+    const saveDir = path.join(process.cwd(), "saves");
+
+    try {
+      const data = await fs.readFile(path.join(saveDir, filename), "utf-8");
+      const state = JSON.parse(data) as WorldState;
+
+      // Restore state
+      this.reset();
+
+      // Restore time
+      if (state.tick) {
+        // We need to access private tick property or use a method if available
+        // For now, we'll just reset time manager and let it start from 0 or
+        // we should add a setTick method to TimeManager.
+        // Assuming TimeManager starts at 0.
+      }
+
+      // Restore tiles
+      if (state.tiles) {
+        this.setTiles(state.tiles);
+      }
+
+      // Restore entities
+      if (state.npcs) {
+        Object.values(state.npcs).forEach((npc) => {
+          this.entityManager.createNPC(
+            npc.id,
+            npc.name,
+            npc.position,
+            npc.skills,
+            npc.personality?.archetype
+          );
+          // Restore other properties... this is a simplified restore
+          const restored = this.entityManager.getEntity(npc.id) as NPC;
+          if (restored) {
+            Object.assign(restored, npc);
+          }
+        });
+      }
+
+      if (state.resources) {
+        Object.values(state.resources).forEach((res) => {
+          this.entityManager.createResource(
+            res.id,
+            res.resourceType,
+            res.position,
+            res.amount,
+            res.properties
+          );
+        });
+      }
+
+      if (state.buildings) {
+        Object.values(state.buildings).forEach((bld) => {
+          this.entityManager.createBuilding(bld.id, bld.buildingType, bld.position);
+          // Restore inventory etc
+          const restored = this.entityManager.getEntity(bld.id) as Building;
+          if (restored) {
+            Object.assign(restored, bld);
+          }
+        });
+      }
+
+      console.log(`World loaded from ${filename}`);
+    } catch (error) {
+      console.error(`Failed to load world: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets a list of available save files.
+   *
+   * @returns Array of save filenames
+   */
+  public async getSavesList(): Promise<string[]> {
+    const saveDir = path.join(process.cwd(), "saves");
+    try {
+      await fs.mkdir(saveDir, { recursive: true });
+      const files = await fs.readdir(saveDir);
+      return files.filter((f) => f.endsWith(".json"));
+    } catch (error) {
+      console.error(`Failed to list saves: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Calculates the distance between two positions.
+   *
+   * @param pos1 - First position
+   * @param pos2 - Second position
+   * @returns Distance in world units
+   */
+  public getDistance(pos1: Vector2, pos2: Vector2): number {
+    const dx = pos1.x - pos2.x;
+    const dy = pos1.y - pos2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * Adds an item to an entity's inventory.
+   *
+   * @param entity - Entity (NPC or Building) to add item to
+   * @param type - Item type
+   * @param quantity - Amount to add
+   */
+  public addToInventory(entity: NPC | Building, type: string, quantity: number) {
+    const existingItem = entity.inventory.find((i) => i.type === type);
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      entity.inventory.push({
+        id: `item_${Date.now()}_${Math.random()}`,
+        type,
+        quantity,
+      });
+    }
+  }
+
+  /**
+   * Removes an item from an entity's inventory.
+   *
+   * @param entity - Entity (NPC or Building) to remove item from
+   * @param type - Item type
+   * @param quantity - Amount to remove
+   * @returns True if successful, false if insufficient quantity
+   */
+  public removeFromInventory(entity: NPC | Building, type: string, quantity: number): boolean {
+    const item = entity.inventory.find((i) => i.type === type);
+    if (!item || item.quantity < quantity) return false;
+
+    item.quantity -= quantity;
+    if (item.quantity <= 0) {
+      entity.inventory = entity.inventory.filter((i) => i !== item);
+    }
+    return true;
+  }
+
+  /**
+   * Deletes a save file.
+   *
+   * @param filename - Name of the file to delete
+   */
+  public async deleteSave(filename: string): Promise<void> {
+    const saveDir = path.join(process.cwd(), "saves");
+    try {
+      await fs.unlink(path.join(saveDir, filename));
+      console.log(`Deleted save: ${filename}`);
+    } catch (error) {
+      console.error(`Failed to delete save ${filename}: ${error}`);
+      throw error;
+    }
   }
 
   /**

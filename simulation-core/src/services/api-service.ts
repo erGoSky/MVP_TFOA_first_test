@@ -4,7 +4,12 @@ import { NPC } from "../types";
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
 
 export class APIService {
-  public static async requestPlan(npc: NPC, goal: any, worldState: any): Promise<string[] | null> {
+  public static async requestPlan(
+    npc: NPC,
+    goal: any,
+    nearbyEntities: any[],
+    worldState: any
+  ): Promise<string[] | null> {
     try {
       const response = await axios.post(`${AI_SERVICE_URL}/plan_action_enhanced`, {
         npc_state: {
@@ -20,6 +25,7 @@ export class APIService {
           },
         },
         goal: goal,
+        nearby_entities: nearbyEntities,
         world_state: worldState,
       });
 

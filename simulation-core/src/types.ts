@@ -93,6 +93,7 @@ export interface Skills {
   gathering: number;
   crafting: number;
   trading: number;
+  observation?: number; // Added for AI perception
 }
 
 export interface ActionState {
