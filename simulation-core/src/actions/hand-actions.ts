@@ -2,7 +2,24 @@ import { ActionHandler } from "./action-manager";
 import { NPC, WorldState } from "../types";
 import { WorldManager } from "../world";
 
+/**
+ * Handles actions related to items in NPC hands.
+ *
+ * Manages placing items from hands into the world, such as placing
+ * buildings (chests, barrels) or dropping resources.
+ */
 export class HandActions implements ActionHandler {
+  /**
+   * Executes a hand-related action.
+   *
+   * Currently supports:
+   * - "place": Places item from hands into world as building or resource
+   *
+   * @param npc - NPC performing the action
+   * @param actionType - Type of action ("place")
+   * @param targetId - Target ID (currently unused)
+   * @param world - World manager instance
+   */
   execute(npc: NPC, actionType: string, targetId: string, world: WorldManager): void {
     if (actionType === "place") {
       if (npc.hands) {

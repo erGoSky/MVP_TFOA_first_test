@@ -6,6 +6,18 @@ import { GoalGenerator } from "../ai/goal-generator";
 import { PlanExecutor } from "../ai/plan-executor";
 import { APIService } from "../services/api-service";
 
+/**
+ * Manages NPC AI decision-making and action execution.
+ *
+ * The AISystem coordinates memory updates, goal management, plan execution,
+ * and communication with the Python AI service for action planning.
+ *
+ * @example
+ * ```typescript
+ * const aiSystem = new AISystem();
+ * await aiSystem.update(npc, world, currentTick);
+ * ```
+ */
 export class AISystem {
   private memorySystem: MemorySystem;
   private goalManager: GoalManager;
@@ -15,6 +27,19 @@ export class AISystem {
     this.goalManager = new GoalManager();
   }
 
+  /**
+   * Updates NPC AI for a single tick.
+   *
+   * Process:
+   * 1. Update memory with observed entities
+   * 2. Execute active actions if in progress
+   * 3. Continue plan execution if plan exists
+   * 4. Generate new goals and request plans from AI service
+   *
+   * @param npc - NPC to update
+   * @param world - World manager instance
+   * @param tick - Current simulation tick
+   */
   public async update(npc: NPC, world: WorldManager, tick: number) {
     // 1. Update Memory
     // Accessing entityManager via world (assuming public access or getter)
@@ -48,7 +73,7 @@ export class AISystem {
     }
 
     // 4. Goal Management
-    const state = world.getState();
+    const state = world.getState() as unknown as import("../types").WorldState;
     const newGoals = GoalGenerator.generateGoals(npc, state, tick);
     newGoals.forEach((goal) => this.goalManager.addGoal(npc.id, goal));
 
@@ -58,69 +83,35 @@ export class AISystem {
       // Throttling: Check if we requested a plan recently
       const lastRequest = npc.lastPlanRequestTick || 0;
       if (tick - lastRequest < 100) {
-        // console.log(`⏳ ${npc.name} waiting for plan cooldown (${tick - lastRequest}/100)`);
-        return; // Skip this tick
+        // Too soon, skip this tick
+        return;
       }
 
-      console.log(`🎯 ${npc.name} pursuing goal: ${activeGoal.type} (${activeGoal.id})`);
+      // 5. Request Plan from Python AI
+      try {
+        const observationRadius = Math.min(20, 5 + (npc.skills.observation || 0));
+        const nearbyEntities = world.entityManager.getEntitiesInRange(
+          npc.position,
+          observationRadius
+        );
 
-      // Update timestamp BEFORE request to prevent re-entry if async takes time
-      npc.lastPlanRequestTick = tick;
+        const plan = await APIService.requestPlan(npc, activeGoal, nearbyEntities, state);
 
-      const worldStateForAI = this.getWorldStateForAI(world, npc);
-      const plan = await APIService.requestPlan(npc, activeGoal, worldStateForAI);
-
-      if (plan && plan.length > 0) {
-        console.log(`📝 Plan received for ${npc.name}: ${plan.join(" -> ")}`);
-        npc.actionPlan = { actions: plan, currentIndex: 0 };
-        PlanExecutor.startNextAction(npc, world);
-      } else {
-        console.log(`⚠️ No plan found for goal ${activeGoal.id}, abandoning.`);
-        this.goalManager.abandonGoal(npc.id, "No plan found");
-        this.setIdle(npc, tick);
+        if (plan && plan.length > 0) {
+          npc.actionPlan = {
+            actions: plan,
+            currentIndex: 0,
+          };
+          npc.lastPlanRequestTick = tick;
+          console.log(`📋 ${npc.name} received plan: ${plan.join(" -> ")}`);
+        } else {
+          console.log(`❌ ${npc.name} received empty plan for goal ${activeGoal.id}`);
+          this.goalManager.abandonGoal(npc.id, "No valid plan found");
+        }
+      } catch (error) {
+        console.error(`Failed to get plan for ${npc.name}:`, error);
+        this.goalManager.abandonGoal(npc.id, "Plan request failed");
       }
-    } else {
-      this.setIdle(npc, tick);
     }
-  }
-
-  private setIdle(npc: NPC, tick: number) {
-    npc.currentAction = "idle";
-    npc.actionState = { inProgress: true, startTime: tick, duration: 10 };
-  }
-
-  private getWorldStateForAI(world: WorldManager, npc: NPC) {
-    const state = world.getState();
-    const visionRadius = 50; // Only send entities within this radius
-
-    // Helper to check distance
-    const isVisible = (pos: { x: number; y: number }) => {
-      const dx = pos.x - npc.position.x;
-      const dy = pos.y - npc.position.y;
-      return Math.sqrt(dx * dx + dy * dy) <= visionRadius;
-    };
-
-    return {
-      time: state.time,
-      resources: Object.values(state.resources)
-        .filter((r) => isVisible(r.position))
-        .map((r) => ({
-          id: r.id,
-          type: r.resourceType,
-          position: r.position,
-          amount: r.amount,
-        })),
-      buildings: Object.values(state.buildings)
-        .filter((b) => isVisible(b.position))
-        .map((b) => ({
-          id: b.id,
-          type: b.buildingType,
-          position: b.position,
-        })),
-    };
-  }
-
-  public addGoal(npcId: string, goal: any) {
-    this.goalManager.addGoal(npcId, goal);
   }
 }

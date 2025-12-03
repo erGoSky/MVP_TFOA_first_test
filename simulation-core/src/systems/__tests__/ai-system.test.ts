@@ -18,6 +18,7 @@ describe("AISystem", () => {
     mockWorld = {
       entityManager: {
         getAllEntities: jest.fn().mockReturnValue([]),
+        getEntitiesInRange: jest.fn().mockReturnValue([]),
       },
       actionManager: {
         executeAction: jest.fn(),
@@ -84,6 +85,7 @@ describe("AISystem", () => {
 
     it("should set idle when no goals", async () => {
       const npc = createTestNPC();
+      npc.lastPlanRequestTick = -1000; // Ensure no throttling
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(null);
 
       await aiSystem.update(npc, mockWorld, 1);
@@ -94,6 +96,7 @@ describe("AISystem", () => {
 
     it("should request plan from API when goal exists", async () => {
       const npc = createTestNPC();
+      npc.lastPlanRequestTick = -1000; // Ensure no throttling
       const mockPlan = ["move_to_tree", "chop_wood"];
 
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(mockPlan);
@@ -113,6 +116,7 @@ describe("AISystem", () => {
 
     it("should abandon goal when planning fails", async () => {
       const npc = createTestNPC();
+      npc.lastPlanRequestTick = -1000; // Ensure no throttling
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(null);
 
       aiSystem.addGoal(npc.id, {

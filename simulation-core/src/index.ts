@@ -50,7 +50,9 @@ app.get("/map", (req, res) => {
 });
 
 app.get("/state", (req, res) => {
-  res.json(world.getState());
+  const lastTickParam = req.query.lastTick;
+  const lastTick = lastTickParam ? parseInt(lastTickParam as string) : undefined;
+  res.json(lastTick !== undefined ? world.getState(lastTick) : world.getState());
 });
 
 app.get("/meta/entities", (req, res) => {

@@ -65,3 +65,6 @@
 
 # Save files
 **/saves/
+
+# Simulation Core public folder
+**/simulation-core/public/

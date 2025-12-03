@@ -91,3 +91,11 @@ coverage/
 
 # Save files
 **/saves/
+
+# Temporary test outputs
+tmp/
+
+# Python bytecode (additional patterns)
+**/__pycache__/
+**/*.pyc
+**/*.pyo

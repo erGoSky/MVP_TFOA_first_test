@@ -23,14 +23,49 @@ import { PlanExecutor } from "./ai/plan-executor";
 import { TimeManager } from "./core/time-manager";
 import { EntityManager } from "./core/entity-manager";
 import { AISystem } from "./systems/ai-system";
+import { DeltaManager } from "./core/delta-manager";
 
 const debugMode = process.env.DEBUG_SINGLE_NPC === "true";
 
+/**
+ * Main world manager that coordinates all simulation systems.
+ *
+ * The WorldManager is the central controller for the simulation, managing:
+ * - Time progression and tick updates
+ * - Entity lifecycle (NPCs, resources, buildings)
+ * - Action execution and routing
+ * - AI system updates
+ * - State delta tracking
+ * - Terrain and tile management
+ *
+ * It delegates to specialized managers (TimeManager, EntityManager, ActionManager, etc.)
+ * and coordinates their interactions.
+ *
+ * @example
+ * ```typescript
+ * const world = new WorldManager();
+ * world.start(); // Begin simulation
+ *
+ * // Create entities
+ * world.createNPC('npc_1', 'Alice', { x: 50, y: 50 });
+ * world.createResource('res_1', 'tree_oak', { x: 10, y: 10 }, 100);
+ *
+ * // Control simulation
+ * world.pause();
+ * world.setSpeed(2); // 2x speed
+ * world.resume();
+ *
+ * // Get state
+ * const state = world.getState();
+ * const delta = world.getState(lastTick);
+ * ```
+ */
 export class WorldManager {
   // Public for system access
   public timeManager: TimeManager;
   public entityManager: EntityManager;
   public actionManager: ActionManager;
+  public deltaManager: DeltaManager;
 
   private aiSystem: AISystem;
 
@@ -57,11 +92,33 @@ export class WorldManager {
     potion_health: ["drink"],
   };
 
+  /**
+   * Creates a new WorldManager instance.
+   *
+   * Initializes all core systems:
+   * - TimeManager for tick progression
+   * - EntityManager for entity lifecycle
+   * - ActionManager for action routing
+   * - DeltaManager for state change tracking
+   * - AISystem for NPC decision-making
+   *
+   * Registers all action handlers and subscribes to events.
+   */
   constructor() {
     this.timeManager = new TimeManager();
     this.entityManager = new EntityManager();
     this.actionManager = new ActionManager();
+    this.deltaManager = new DeltaManager();
     this.aiSystem = new AISystem();
+
+    // Subscribe DeltaManager to EntityManager events
+    this.entityManager.on("created", (entity) =>
+      this.deltaManager.addChange(entity.id, "created", entity)
+    );
+    this.entityManager.on("updated", (entity) =>
+      this.deltaManager.addChange(entity.id, "updated", entity)
+    );
+    this.entityManager.on("removed", (id) => this.deltaManager.addChange(id, "removed"));
 
     this.registerHandlers();
 
@@ -72,6 +129,10 @@ export class WorldManager {
     this.initializeTiles();
   }
 
+  /**
+   * Initializes the tile grid with default grass biome.
+   * @private
+   */
   private initializeTiles() {
     for (let y = 0; y < 100; y++) {
       this.tiles[y] = [];
@@ -82,19 +143,33 @@ export class WorldManager {
     this.tilesInitialized = true;
   }
 
-  // Allow world generator to set tiles
+  /**
+   * Sets the entire tile grid (used by WorldGenerator).
+   *
+   * @param tiles - 2D array of tile data
+   */
   public setTiles(tiles: any[][]) {
     this.tiles = tiles;
     this.tilesInitialized = true;
   }
 
-  // Allow world generator to set individual tile
+  /**
+   * Sets a single tile (used by WorldGenerator).
+   *
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   * @param tile - Tile data
+   */
   public setTile(x: number, y: number, tile: any) {
     if (y >= 0 && y < this.tiles.length && x >= 0 && x < this.tiles[y].length) {
       this.tiles[y][x] = tile;
     }
   }
 
+  /**
+   * Registers all action handlers with the ActionManager.
+   * @private
+   */
   private registerHandlers() {
     const moveHandler = new MoveHandler();
     const pickupHandler = new PickupHandler();
@@ -110,11 +185,11 @@ export class WorldManager {
     this.actionManager.registerHandler("move", moveHandler);
     this.actionManager.registerHandler("pickup", pickupHandler);
 
-    ["chop", "mine"].forEach((act) => this.actionManager.registerHandler(act, resourceHandler));
-
-    ["create_contract", "sign_contract", "pay_prepayment", "build_step", "pay_final"].forEach(
-      (act) => this.actionManager.registerHandler(act, contractHandler)
+    ["chop", "mine", "gather", "hunt", "farm"].forEach((act) =>
+      this.actionManager.registerHandler(act, resourceHandler)
     );
+
+    this.actionManager.registerHandler("contract", contractHandler);
 
     ["store_item", "retrieve_item"].forEach((act) =>
       this.actionManager.registerHandler(act, storageHandler)
@@ -137,50 +212,134 @@ export class WorldManager {
     this.actionManager.registerHandler("idle", idleHandler);
   }
 
-  // Delegate to TimeManager
+  // ========== Time Control Methods ==========
+
+  /** Starts the simulation time loop */
   public start() {
     this.timeManager.start();
   }
+
+  /** Stops the simulation time loop */
   public stop() {
     this.timeManager.stop();
   }
+
+  /** Pauses the simulation (tick loop continues but NPCs don't update) */
   public pause() {
     this.timeManager.pause();
   }
+
+  /** Resumes the simulation from paused state */
   public resume() {
     this.timeManager.resume();
   }
+
+  /**
+   * Sets the simulation speed multiplier.
+   *
+   * @param speed - Speed multiplier (1, 2, 4, 8, or 16)
+   */
   public setSpeed(speed: number) {
     this.timeManager.setSpeed(speed);
   }
+
+  /**
+   * Gets the current simulation status.
+   *
+   * @returns Object with paused state, speed, and current tick
+   */
   public getStatus() {
     return this.timeManager.getStatus();
   }
 
-  // Delegate to EntityManager
+  // ========== Entity Management Methods ==========
+
+  /**
+   * Creates a new NPC entity.
+   * Delegates to EntityManager.
+   */
   public createNPC(id: string, name: string, pos: Vector2, skills?: Skills, archetype?: string) {
     return this.entityManager.createNPC(id, name, pos, skills, archetype);
   }
+
+  /**
+   * Creates a new resource entity.
+   * Delegates to EntityManager.
+   */
   public createResource(id: string, type: any, pos: Vector2, amount: number, props?: any) {
     return this.entityManager.createResource(id, type, pos, amount, props);
   }
+
+  /**
+   * Creates a new building entity.
+   * Delegates to EntityManager.
+   */
   public createBuilding(id: string, type: string, pos: Vector2) {
     return this.entityManager.createBuilding(id, type, pos);
   }
+
+  /**
+   * Removes an entity from the world.
+   * Delegates to EntityManager.
+   */
   public removeEntity(id: string) {
     this.entityManager.removeEntity(id);
   }
+
+  /**
+   * Updates an entity with partial data.
+   * Delegates to EntityManager.
+   */
   public updateEntity(id: string, updates: any) {
     this.entityManager.updateEntity(id, updates);
   }
+
+  /**
+   * Resets the entire world state.
+   *
+   * Clears all entities, deltas, and reinitializes tiles.
+   */
   public reset() {
     this.entityManager.reset();
+    this.deltaManager.reset();
     this.initializeTiles();
   }
 
-  // Computed State
-  public getState(): WorldState {
+  // ========== State Access Methods ==========
+
+  /**
+   * Gets the complete world state or delta updates.
+   *
+   * Overloaded method:
+   * - No args: Returns full WorldState
+   * - With lastTick: Returns delta changes since that tick
+   *
+   * @param lastTick - Optional last tick for delta updates
+   * @returns Full state or delta object
+   *
+   * @example
+   * ```typescript
+   * // Get full state
+   * const fullState = world.getState();
+   *
+   * // Get delta since tick 100
+   * const delta = world.getState(100);
+   * ```
+   */
+  public getState(): WorldState;
+  public getState(lastTick: number): { tick: number; delta: any[] };
+  public getState(lastTick?: number): WorldState | { tick: number; delta: any[] } {
     const timeStatus = this.timeManager.getStatus();
+
+    if (lastTick !== undefined && lastTick >= 0) {
+      // Return delta
+      return {
+        tick: timeStatus.tick,
+        delta: this.deltaManager.getDeltaSince(lastTick),
+      };
+    }
+
+    // Return full state
     const entityState = this.entityManager.getState();
 
     return {
@@ -194,7 +353,20 @@ export class WorldManager {
     };
   }
 
-  // Main Loop
+  // ========== Simulation Loop ==========
+
+  /**
+   * Main simulation tick handler.
+   *
+   * Called by TimeManager on each tick. Updates all NPCs via AISystem
+   * and commits deltas for this tick.
+   *
+   * In debug mode (DEBUG_SINGLE_NPC=true), processes only the first NPC synchronously.
+   * In normal mode, updates all NPCs concurrently.
+   *
+   * @param tick - Current simulation tick number
+   * @private
+   */
   public async onTick(tick: number) {
     const npcs = this.entityManager.getNPCs();
 
@@ -211,123 +383,30 @@ export class WorldManager {
         this.aiSystem.update(npc, this, tick);
       });
     }
+
+    // Commit delta for this tick
+    this.deltaManager.commitTick(tick);
   }
 
-  // Legacy alias for index.ts compatibility (if needed)
+  /**
+   * Legacy manual tick method.
+   * @deprecated Use start() instead
+   */
   public tick() {
     console.warn("Manual world.tick() called. Use world.start() instead.");
   }
 
+  /**
+   * Resets an NPC's current action.
+   *
+   * @param npc - NPC to reset
+   */
   public resetAction(npc: NPC) {
     npc.currentAction = null;
-    npc.actionState.inProgress = false;
-    npc.actionState.duration = 0;
-  }
-
-  // Inventory helpers (should move to InventorySystem)
-  public addToInventory(npc: NPC, type: string, quantity: number) {
-    console.log(`Adding ${quantity} ${type} to ${npc.name}`);
-    const item = npc.inventory.find((i) => i.type === type);
-    if (item) {
-      item.quantity += quantity;
-    } else {
-      npc.inventory.push({ id: `${type}_${Date.now()}`, type, quantity });
-    }
-  }
-
-  public removeFromInventory(npc: NPC, type: string, quantity: number) {
-    const item = npc.inventory.find((i) => i.type === type);
-    if (item) {
-      item.quantity -= quantity;
-      if (item.quantity <= 0) {
-        npc.inventory = npc.inventory.filter((i) => i !== item);
-      }
-    }
-  }
-
-  // Save/Load (should move to FileManager)
-  public saveState(filename: string) {
-    const state = this.getState();
-    const fs = require("fs");
-    fs.writeFileSync(filename, JSON.stringify(state, null, 2));
-    console.log(`World saved to ${filename}`);
-  }
-
-  public loadState(filename: string) {
-    const fs = require("fs");
-    const data = fs.readFileSync(filename, "utf-8");
-    const state = JSON.parse(data);
-
-    // Restore time
-    this.timeManager.setTick(state.tick);
-
-    // Restore entities
-    this.entityManager.reset();
-    Object.values(state.npcs).forEach((npc: any) => {
-      const restored = this.entityManager.createNPC(
-        npc.id,
-        npc.name,
-        npc.position,
-        npc.skills,
-        npc.personality.archetype
-      );
-      Object.assign(restored, npc);
-    });
-
-    Object.values(state.resources).forEach((res: any) => {
-      const restored = this.entityManager.createResource(
-        res.id,
-        res.resourceType,
-        res.position,
-        res.amount,
-        res.properties
-      );
-      Object.assign(restored, res);
-    });
-
-    Object.values(state.buildings).forEach((bld: any) => {
-      const restored = this.entityManager.createBuilding(bld.id, bld.buildingType, bld.position);
-      Object.assign(restored, bld);
-    });
-
-    // Restore tiles
-    if (state.tiles) {
-      this.tiles = state.tiles;
-      this.tilesInitialized = true;
-    }
-
-    console.log(`World loaded from ${filename}`);
-  }
-
-  public async getSavesList(): Promise<string[]> {
-    const fs = require("fs");
-    const path = require("path");
-    const savesDir = "./saves";
-
-    if (!fs.existsSync(savesDir)) {
-      return [];
-    }
-
-    return fs.readdirSync(savesDir).filter((file: string) => file.endsWith(".json"));
-  }
-
-  public async deleteSave(filename: string): Promise<void> {
-    const fs = require("fs");
-    const path = require("path");
-    const filePath = path.join("./saves", filename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`Deleted save file: ${filename}`);
-    } else {
-      throw new Error(`Save file not found: ${filename}`);
-    }
-  }
-
-  // Helper for distance calculation (used by handlers)
-  public getDistance(pos1: Vector2, pos2: Vector2): number {
-    const dx = pos1.x - pos2.x;
-    const dy = pos1.y - pos2.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    npc.actionState = {
+      inProgress: false,
+      startTime: 0,
+      duration: 0,
+    };
   }
 }

@@ -103,4 +103,5 @@ export interface WorldState {
 export interface SimulationStatus {
   paused: boolean;
   speed: number;
+  tick: number;
 }

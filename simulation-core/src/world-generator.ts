@@ -3,6 +3,7 @@ import { Vector2, BiomeType, Tile, ResourceType } from "./types";
 import { PerlinNoise } from "./utils/perlin";
 import { RESOURCE_TYPES, getResourceMetadata } from "./constants/entities";
 
+/** Parameters for world generation */
 export interface GenerationParams {
   mapSize?: number;
   npcCount?: number;
@@ -10,6 +11,23 @@ export interface GenerationParams {
   seed?: number;
 }
 
+/**
+ * Generates procedural game worlds with terrain, resources, buildings, and NPCs.
+ *
+ * Uses Perlin noise for terrain generation and biome-based resource distribution.
+ * Creates a central tavern with workstations and spawns NPCs with varied skills.
+ *
+ * @example
+ * ```typescript
+ * const generator = new WorldGenerator(worldManager);
+ * generator.generate({
+ *   mapSize: 100,
+ *   npcCount: 5,
+ *   resourceDensity: 0.1,
+ *   seed: 12345
+ * });
+ * ```
+ */
 export class WorldGenerator {
   private world: WorldManager;
   private noise: PerlinNoise;
@@ -19,6 +37,15 @@ export class WorldGenerator {
     this.noise = new PerlinNoise();
   }
 
+  /**
+   * Generates a complete world with terrain, resources, buildings, and NPCs.
+   *
+   * @param params - Generation parameters
+   * @param params.mapSize - World size in tiles (default: 100)
+   * @param params.npcCount - Number of NPCs to create (default: 5)
+   * @param params.resourceDensity - Resource spawn density 0-1 (default: 0.1)
+   * @param params.seed - Random seed for reproducible generation
+   */
   public generate(params: GenerationParams = {}) {
     this.world.reset();
 
@@ -48,6 +75,10 @@ export class WorldGenerator {
     console.log("World generation complete");
   }
 
+  /**
+   * Generates terrain using Perlin noise for elevation and moisture.
+   * @private
+   */
   private generateTerrain(mapSize: number) {
     // Tiles are already initialized in WorldManager constructor
     // We just need to set the biome for each tile
@@ -65,6 +96,10 @@ export class WorldGenerator {
     }
   }
 
+  /**
+   * Determines biome type based on elevation and moisture values.
+   * @private
+   */
   private getBiome(e: number, m: number): BiomeType {
     if (e < -0.2) return "water";
     if (e > 0.6) return "mountain";
@@ -74,6 +109,10 @@ export class WorldGenerator {
     return "plains";
   }
 
+  /**
+   * Populates the world with resources based on biome types.
+   * @private
+   */
   private populateResources(mapSize: number, density: number) {
     const state = this.world.getState();
 
@@ -98,6 +137,10 @@ export class WorldGenerator {
     }
   }
 
+  /**
+   * Selects appropriate resource type for a biome.
+   * @private
+   */
   private getResourceForBiome(biome: BiomeType): { type: ResourceType; props: any } | null {
     const rand = Math.random();
 
@@ -151,6 +194,10 @@ export class WorldGenerator {
     }
   }
 
+  /**
+   * Creates central tavern and surrounding workstations.
+   * @private
+   */
   private createBuildings(mapSize: number) {
     const center = Math.floor(mapSize / 2);
     let pos = { x: center, y: center };
@@ -196,6 +243,10 @@ export class WorldGenerator {
     }
   }
 
+  /**
+   * Creates NPCs with varied roles and skills.
+   * @private
+   */
   private createNPCs(count: number, mapSize: number) {
     const roles = [
       { id: "gatherer", name: "Gatherer", skills: { gathering: 80, crafting: 10, trading: 10 } },
