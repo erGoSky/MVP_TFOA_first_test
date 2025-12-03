@@ -94,6 +94,7 @@ export interface Skills {
   crafting: number;
   trading: number;
   observation?: number; // Added for AI perception
+  memory?: number; // Added for advanced memory system (1-3)
 }
 
 export interface ActionState {
@@ -175,6 +176,10 @@ export interface MemoryItem {
   position: Vector2;
   timestamp: number; // When this memory was formed/updated
   value?: any; // Optional extra data (e.g., amount remaining)
+  interactionCount: number; // Number of sessions this entity was seen
+  retentionDuration: number; // Current "time to live" in ticks
+  expiryTick: number; // Absolute tick when memory becomes forgotten
+  forgotten: boolean; // If true, excluded from AI decision making
 }
 
 export interface NPCMemory {
@@ -201,6 +206,7 @@ export interface NPC extends Entity {
     currentIndex: number;
   };
   lastPlanRequestTick?: number; // Throttling: last tick a plan was requested
+  lastFallbackTick?: number; // Throttling: last tick fallback behavior was triggered
 }
 
 export interface Building extends Entity {

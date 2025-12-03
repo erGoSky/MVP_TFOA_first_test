@@ -35,6 +35,7 @@ describe("AISystem", () => {
         buildings: {},
         contracts: {},
       }),
+      getDistance: jest.fn().mockReturnValue(10),
     } as any;
 
     // Mock APIService
@@ -114,9 +115,10 @@ describe("AISystem", () => {
       expect(mockAPIService.requestPlan).toHaveBeenCalled();
     });
 
-    it("should abandon goal when planning fails", async () => {
+    it("should trigger fallback when planning fails", async () => {
       const npc = createTestNPC();
       npc.lastPlanRequestTick = -1000; // Ensure no throttling
+      npc.lastFallbackTick = -1000; // Ensure no throttling
       mockAPIService.requestPlan = jest.fn().mockResolvedValue(null);
 
       (aiSystem as any).goalManager.addGoal(npc.id, {
@@ -126,9 +128,16 @@ describe("AISystem", () => {
         targetItem: "wood",
       });
 
+      // Mock getDistance
+      mockWorld.getDistance = jest.fn().mockReturnValue(10);
+
       await aiSystem.update(npc, mockWorld, 1);
 
-      expect(npc.currentAction).toBe("idle");
+      // Should have set a fallback move action
+      expect(npc.currentAction).toContain("move");
+      expect(npc.actionState.inProgress).toBe(true);
+      // Should log fallback
+      // (We can't easily test console.log without mocking it, but the state change confirms it)
     });
   });
 

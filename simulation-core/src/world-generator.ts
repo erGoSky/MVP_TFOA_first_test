@@ -54,6 +54,13 @@ export class WorldGenerator {
     const resourceDensity = params.resourceDensity || 0.1;
     const seed = params.seed || Math.random();
 
+    // Log debug options status
+    console.log("=".repeat(60));
+    console.log("DEBUG OPTIONS:");
+    console.log(`  DEBUG_SINGLE_NPC: ${process.env.DEBUG_SINGLE_NPC || "false"}`);
+    console.log(`  AI_SERVICE_URL: ${process.env.AI_SERVICE_URL || "http://localhost:8000"}`);
+    console.log("=".repeat(60));
+
     console.log(`Generating world with size ${mapSize}, seed ${seed}`);
 
     this.world.getState().width = mapSize;
@@ -245,6 +252,12 @@ export class WorldGenerator {
 
   /**
    * Creates NPCs with varied roles and skills.
+   *
+   * DEBUG_SINGLE_NPC behavior:
+   * - If set to "true": spawns 2 NPCs at the same coordinates
+   * - If set to a number: spawns that many NPCs near the center of the map
+   * - If not set: normal world generation (spawns count NPCs scattered)
+   *
    * @private
    */
   private createNPCs(count: number, mapSize: number) {
@@ -256,19 +269,66 @@ export class WorldGenerator {
       { id: "veteran", name: "Veteran", skills: { gathering: 60, crafting: 60, trading: 60 } },
     ];
 
-    for (let i = 0; i < count; i++) {
+    const debugValue = process.env.DEBUG_SINGLE_NPC;
+    let npcCount = count;
+    let useDebugSpawning = false;
+    let debugSpawnCount = 2; // Default: 2 NPCs at same spot
+
+    if (debugValue) {
+      useDebugSpawning = true;
+      const parsedNum = parseInt(debugValue, 10);
+      if (!isNaN(parsedNum) && parsedNum > 0) {
+        debugSpawnCount = parsedNum;
+        npcCount = parsedNum;
+      } else {
+        // DEBUG_SINGLE_NPC is "true" or other non-numeric value
+        npcCount = 2;
+      }
+      console.log(`[DEBUG] Spawning ${npcCount} NPCs in debug mode`);
+    }
+
+    for (let i = 0; i < npcCount; i++) {
       const role = roles[i % roles.length];
       const id = `npc_${role.id}_${i}`;
       const name = `${role.name} ${i + 1}`;
 
-      let pos = this.getRandomPos(mapSize);
-      let attempts = 0;
-      while (!this.isValidSpawnSpot(pos) && attempts < 50) {
+      let pos: Vector2;
+
+      if (useDebugSpawning) {
+        // Debug spawning: near center of map
+        const center = Math.floor(mapSize / 2);
+        if (debugSpawnCount === 2 && npcCount === 2) {
+          // Special case: 2 NPCs at exactly the same spot
+          pos = { x: center, y: center };
+        } else {
+          // Multiple NPCs: spawn in a small cluster near center
+          const offset = Math.floor(i / 2); // Spiral outward slightly
+          const angle = (i * Math.PI * 2) / npcCount;
+          pos = {
+            x: center + Math.floor(Math.cos(angle) * offset),
+            y: center + Math.floor(Math.sin(angle) * offset),
+          };
+        }
+      } else {
+        // Normal spawning: random valid position
         pos = this.getRandomPos(mapSize);
-        attempts++;
+        let attempts = 0;
+        while (!this.isValidSpawnSpot(pos) && attempts < 50) {
+          pos = this.getRandomPos(mapSize);
+          attempts++;
+        }
       }
 
-      this.world.createNPC(id, name, pos, role.skills);
+      const npc = this.world.createNPC(id, name, pos, role.skills);
+
+      // Initialize NPC memory with surrounding entities
+      const observationRadius = Math.min(20, 5 + (npc.skills.observation || 0));
+      const nearbyEntities = this.world.entityManager.getEntitiesInRange(pos, observationRadius);
+
+      // Use a temporary MemorySystem instance to populate initial memory
+      const { MemorySystem } = require("./ai/memory.system");
+      const memorySystem = new MemorySystem();
+      memorySystem.updateMemory(npc, nearbyEntities, 0); // Tick 0 for initial spawn
     }
   }
 

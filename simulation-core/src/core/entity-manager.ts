@@ -112,7 +112,12 @@ export class EntityManager {
       position,
       needs: { hunger: 0, energy: 1, social: 0.5 },
       stats: { health: 100, money: 0, speed: 1 },
-      skills: initialSkills || { gathering: 10, crafting: 5, trading: 5 },
+      skills: initialSkills || {
+        gathering: Math.floor(Math.random() * 6) + 1, // 1-6
+        crafting: Math.floor(Math.random() * 2) + 1, // 1-2
+        trading: Math.floor(Math.random() * 5) + 1, // 1-5
+        memory: Math.floor(Math.random() * 3) + 1, // 1-3
+      },
       personality: PersonalityGenerator.generate(archetype),
       currentAction: null,
       actionState: { inProgress: false, startTime: 0, duration: 0 },

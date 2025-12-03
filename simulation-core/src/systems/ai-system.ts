@@ -50,14 +50,7 @@ export class AISystem {
       const elapsed = tick - npc.actionState.startTime;
       if (elapsed >= npc.actionState.duration) {
         if (npc.currentAction) {
-          // Execute action via World's ActionManager (or direct if exposed)
-          // We need to access actionManager. Currently it's private in WorldManager.
-          // We should expose it or add a method executeAction on WorldManager.
-          // For now, assuming we'll add a getter or public property.
-          // world.actionManager.executeAction(npc, npc.currentAction, world);
-
-          // Better: world.executeAction(npc, npc.currentAction);
-          // But let's assume we make actionManager public for systems.
+          // Execute action via World's ActionManager
           (world as any).actionManager.executeAction(npc, npc.currentAction, world);
 
           PlanExecutor.completeAction(npc, world);
@@ -90,12 +83,32 @@ export class AISystem {
       // 5. Request Plan from Python AI
       try {
         const observationRadius = Math.min(20, 5 + (npc.skills.observation || 0));
-        const nearbyEntities = world.entityManager.getEntitiesInRange(
-          npc.position,
-          observationRadius
-        );
 
-        const plan = await APIService.requestPlan(npc, activeGoal, nearbyEntities, state);
+        // Use MemorySystem to get valid (non-forgotten) memories + currently visible entities
+        // For the AI request, we want "what does the NPC know about?"
+        // This includes valid memories AND currently visible things (which are also in memory now)
+        const validMemories = this.memorySystem.getValidMemories(npc);
+
+        // We need to map memories back to a format the AI understands if it expects full entities
+        // But the API service expects "nearby_entities".
+        // Let's send the valid memories as the "nearby_entities" context,
+        // but we might need to enrich them with current data if they are visible.
+        // For now, let's stick to the previous behavior of sending "entities in range"
+        // BUT filtered by what the NPC *should* perceive/remember.
+        // Actually, the requirement is: "Exclude from AI decision making" if forgotten.
+        // So we should send valid memories.
+
+        // Construct a simplified list of entities from memory for the AI
+        const memoryContext = validMemories.map((m) => ({
+          id: m.id,
+          type: m.type,
+          subtype: m.subtype,
+          position: m.position,
+          interaction_count: m.interactionCount, // Send interaction count
+          // Add other props if needed by AI
+        }));
+
+        const plan = await APIService.requestPlan(npc, activeGoal, memoryContext, state);
 
         if (plan && plan.length > 0) {
           npc.actionPlan = {
@@ -107,11 +120,81 @@ export class AISystem {
         } else {
           console.log(`❌ ${npc.name} received empty plan for goal ${activeGoal.id}`);
           this.goalManager.abandonGoal(npc.id, "No valid plan found");
+          this.handlePlanningFailure(npc, world, tick);
         }
       } catch (error) {
         console.error(`Failed to get plan for ${npc.name}:`, error);
         this.goalManager.abandonGoal(npc.id, "Plan request failed");
+        this.handlePlanningFailure(npc, world, tick);
+      }
+    } else {
+      // No active goal? Maybe fallback too?
+      // For now, only fallback on plan failure.
+    }
+  }
+
+  /**
+   * Handles cases where AI planning fails by triggering a fallback behavior.
+   *
+   * Strategy:
+   * 1. Visual Exploration: Walk to the farthest visible object.
+   * 2. Wander: If nothing visible, walk to a random nearby spot.
+   */
+  private handlePlanningFailure(npc: NPC, world: WorldManager, tick: number) {
+    // Throttling for fallback to prevent spamming
+    const lastFallback = npc.lastFallbackTick || 0;
+    if (tick - lastFallback < 20) return;
+
+    npc.lastFallbackTick = tick;
+    console.log(`⚠️ ${npc.name} initiating fallback behavior...`);
+
+    // Strategy 1: Visual Exploration (Farthest Visible/Remembered)
+    const validMemories = this.memorySystem.getValidMemories(npc);
+
+    if (validMemories.length > 0) {
+      // Filter out self and sort by distance descending
+      const candidates = validMemories
+        .filter((m) => m.id !== npc.id)
+        .sort((a, b) => {
+          const distA = world.getDistance(npc.position, a.position);
+          const distB = world.getDistance(npc.position, b.position);
+          return distB - distA; // Descending
+        });
+
+      if (candidates.length > 0) {
+        const target = candidates[0];
+        console.log(
+          `🔭 ${npc.name} fallback: Exploring towards ${target.subtype} at (${target.position.x}, ${target.position.y})`
+        );
+
+        // Create a move action
+        // Note: The move handler should handle "just moving" without a specific interaction target
+        npc.currentAction = `move(${target.position.x},${target.position.y})`;
+        npc.actionState = {
+          inProgress: true,
+          startTime: tick,
+          duration: Math.ceil(world.getDistance(npc.position, target.position) / npc.stats.speed),
+        };
+        return;
       }
     }
+
+    // Strategy 2: Wander (Random nearby)
+    const range = 5;
+    const dx = Math.floor(Math.random() * (range * 2 + 1)) - range;
+    const dy = Math.floor(Math.random() * (range * 2 + 1)) - range;
+    const targetX = Math.max(0, Math.min(99, npc.position.x + dx));
+    const targetY = Math.max(0, Math.min(99, npc.position.y + dy));
+
+    console.log(`🎲 ${npc.name} fallback: Wandering to (${targetX}, ${targetY})`);
+
+    npc.currentAction = `move(${targetX},${targetY})`;
+    npc.actionState = {
+      inProgress: true,
+      startTime: tick,
+      duration: Math.ceil(
+        world.getDistance(npc.position, { x: targetX, y: targetY }) / npc.stats.speed
+      ),
+    };
   }
 }

@@ -19,7 +19,7 @@ import { EventEmitter } from "events";
  * ```
  */
 export class TimeManager extends EventEmitter {
-  private paused: boolean = false;
+  private paused: boolean = true; // Start paused by default
   private tickRateMultiplier: number = 1;
   private readonly BASE_TICK_RATE: number = 1000; // 1 second
   private intervalId: NodeJS.Timeout | null = null;

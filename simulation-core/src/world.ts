@@ -27,8 +27,6 @@ import { EntityManager } from "./core/entity-manager";
 import { AISystem } from "./systems/ai-system";
 import { DeltaManager } from "./core/delta-manager";
 
-const debugMode = process.env.DEBUG_SINGLE_NPC === "true";
-
 /**
  * Main world manager that coordinates all simulation systems.
  *
@@ -363,39 +361,19 @@ export class WorldManager {
    * Called by TimeManager on each tick. Updates all NPCs via AISystem
    * and commits deltas for this tick.
    *
-   * In debug mode (DEBUG_SINGLE_NPC=true), processes only the first NPC synchronously.
-   * In normal mode, updates all NPCs concurrently.
-   *
    * @param tick - Current simulation tick number
    * @private
    */
   public async onTick(tick: number) {
     const npcs = this.entityManager.getNPCs();
 
-    if (debugMode) {
-      // Debug Mode: Process only the first NPC and wait for it
-      const npc = npcs[0];
-      if (npc) {
-        // console.log(`[DEBUG] Processing single NPC: ${npc.name}`);
-        await this.aiSystem.update(npc, this, tick);
-      }
-    } else {
-      // Normal Mode: Update all NPCs concurrently (fire and forget)
-      npcs.forEach((npc) => {
-        this.aiSystem.update(npc, this, tick);
-      });
-    }
+    // Update all NPCs concurrently (fire and forget)
+    npcs.forEach((npc) => {
+      this.aiSystem.update(npc, this, tick);
+    });
 
     // Commit delta for this tick
     this.deltaManager.commitTick(tick);
-  }
-
-  /**
-   * Legacy manual tick method.
-   * @deprecated Use start() instead
-   */
-  public tick() {
-    console.warn("Manual world.tick() called. Use world.start() instead.");
   }
 
   /**
